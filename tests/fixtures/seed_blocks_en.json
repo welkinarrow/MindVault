@@ -1,0 +1,92 @@
+[
+  {
+    "block_id": "b-001",
+    "title": "Refund policy (public)",
+    "content": "Customers can request a full refund within 30 days of purchase. If a payment is charged but the order fails, the refund is issued automatically within 5 business days.",
+    "level": 0,
+    "scope": "public",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-002",
+    "title": "App v5.2 release announcement (public)",
+    "content": "Version 5.2 of the shopping app introduces a faster checkout and new payment options. The update rolls out gradually starting September 12.",
+    "level": 0,
+    "scope": "public",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-101",
+    "title": "Finance weekly: Q3 refund rate, East China",
+    "content": "The East China refund rate rose from 2.1% in Q2 to 4.8% in Q3. Monthly: July 2.3%, August 2.4%, September 7.6%. Almost all of the increase came after September 12. Refunds coded 'payment charged but order failed' made up 61% of September refunds in East China.",
+    "level": 2,
+    "scope": "finance",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-102",
+    "title": "Finance weekly: Q3 refund rate, North China",
+    "content": "The North China refund rate was 2.0% in Q2 and 2.2% in Q3, roughly flat. There was a small uptick in the last week of September.",
+    "level": 2,
+    "scope": "finance",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-207",
+    "title": "Support ticket summary: September payment failures",
+    "content": "Tickets tagged 'payment failure' jumped from about 40 per week to 310 per week starting September 13. 78% came from customers in East China, mostly on Android app v5.2. Typical complaint: the card was charged but the order showed as failed, and the customer asked for a refund.",
+    "level": 1,
+    "scope": "support",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-208",
+    "title": "How support processes product returns",
+    "content": "Standard steps for a product return: verify the order, confirm it is within the 30-day window, and send a return label. Product returns are handled separately from payment-failure refunds.",
+    "level": 1,
+    "scope": "support",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-318",
+    "title": "Release notes: app v5.2 (September 12)",
+    "content": "v5.2 rolled out on September 12, first to East China as a staged regional rollout, then nationwide on September 26. Changes: a new checkout flow and a switch to a new payment gateway SDK. Known issue (unconfirmed): payment confirmation callbacks may time out on some Android devices, leaving orders marked as failed after the charge succeeded, which can lead to refund requests.",
+    "level": 1,
+    "scope": "release",
+    "status": "unverified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-412",
+    "title": "Management meeting notes: East China refund spike (October 8)",
+    "content": "Leadership discussed the Q3 East China refund spike. Decisions: pause the v5.2 rollout until the payment fix ships, and issue goodwill credits to affected customers. Estimated cost: 1.2M.",
+    "level": 3,
+    "scope": "mgmt",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-413",
+    "title": "Q4 budget plan",
+    "content": "Q4 marketing budget is reduced by 8%. Engineering hiring is frozen except for the payments team.",
+    "level": 3,
+    "scope": "mgmt",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-501",
+    "title": "Payment module architecture (R&D)",
+    "content": "The checkout service calls the payment gateway SDK and waits for an asynchronous confirmation callback. If no callback arrives within 15 seconds, the order is marked as failed. Since v5.2, the new gateway SDK sends callbacks to a different endpoint.",
+    "level": 1,
+    "scope": "rnd",
+    "status": "verified",
+    "author": "seed"
+  }
+]

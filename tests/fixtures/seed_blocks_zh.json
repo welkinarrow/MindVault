@@ -1,0 +1,92 @@
+[
+  {
+    "block_id": "b-001",
+    "title": "退款政策（公开）",
+    "content": "客户可在购买后 30 天内申请全额退款。如果扣款成功但订单失败，退款将在 5 个工作日内自动发放。",
+    "level": 0,
+    "scope": "public",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-002",
+    "title": "App v5.2 发布公告（公开）",
+    "content": "购物 App 5.2 版本带来更快的结账流程和新的支付方式，自 9 月 12 日起分批推送。",
+    "level": 0,
+    "scope": "public",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-101",
+    "title": "财务周报：华东区 Q3 退款率",
+    "content": "华东区退款率从 Q2 的 2.1% 升至 Q3 的 4.8%。分月看：7 月 2.3%，8 月 2.4%，9 月 7.6%。几乎全部增幅出现在 9 月 12 日之后。9 月华东区退款中，原因为“扣款成功但订单失败”的占 61%。",
+    "level": 2,
+    "scope": "finance",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-102",
+    "title": "财务周报：华北区 Q3 退款率",
+    "content": "华北区退款率 Q2 为 2.0%，Q3 为 2.2%，基本持平。9 月最后一周略有上升。",
+    "level": 2,
+    "scope": "finance",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-207",
+    "title": "客服工单汇总：9 月支付失败",
+    "content": "自 9 月 13 日起，标记为“支付失败”的工单从每周约 40 件激增到每周 310 件。其中 78% 来自华东区客户，大多使用 Android 版 App v5.2。典型投诉：银行卡已扣款，但订单显示失败，客户要求退款。",
+    "level": 1,
+    "scope": "support",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-208",
+    "title": "客服处理商品退货的流程",
+    "content": "商品退货的标准步骤：核实订单，确认在 30 天退货期内，发送退货面单。商品退货与支付失败导致的退款分开处理。",
+    "level": 1,
+    "scope": "support",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-318",
+    "title": "发布记录：App v5.2（9 月 12 日）",
+    "content": "v5.2 于 9 月 12 日上线，先在华东区分区域灰度发布，9 月 26 日推送至全国。改动：新的结账流程，并更换为新的支付网关 SDK。已知问题（未确认）：部分 Android 设备上支付确认回调可能超时，导致扣款成功后订单仍被标记为失败，进而引发退款申请。",
+    "level": 1,
+    "scope": "release",
+    "status": "unverified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-412",
+    "title": "管理层会议纪要：华东区退款激增（10 月 8 日）",
+    "content": "管理层讨论了 Q3 华东区退款激增问题。决定：在支付问题修复前暂停 v5.2 推送，并向受影响客户发放补偿券。预计成本 120 万元。",
+    "level": 3,
+    "scope": "mgmt",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-413",
+    "title": "Q4 预算安排",
+    "content": "Q4 市场预算削减 8%。除支付团队外，研发部门冻结招聘。",
+    "level": 3,
+    "scope": "mgmt",
+    "status": "verified",
+    "author": "seed"
+  },
+  {
+    "block_id": "b-501",
+    "title": "支付模块架构说明（研发）",
+    "content": "结账服务调用支付网关 SDK，并等待异步确认回调。若 15 秒内未收到回调，订单即被标记为失败。自 v5.2 起，新的网关 SDK 将回调发送到另一个接口地址。",
+    "level": 1,
+    "scope": "rnd",
+    "status": "verified",
+    "author": "seed"
+  }
+]

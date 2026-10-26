@@ -1,0 +1,17 @@
+# 含密钥，绝不提交（见 docs/interfaces.md 第 6.1 节）
+config/agents.json
+.env
+
+# 运行时生成
+data/memory.db
+logs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS / 编辑器
+.DS_Store
+.vscode/
