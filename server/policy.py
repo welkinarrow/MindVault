@@ -81,15 +81,29 @@ def denial(reason_code: str, block_id: str, block: Optional[dict] = None, lang: 
 # ---------------------------------------------------------------- 写入
 
 
-def label_for_write(agent: dict, session_max_level: int) -> tuple[int, str]:
-    """计算写入内容的级别和范围（会话污点）。
+LABEL_MODES = ("taint", "self")
 
-    级别 = 本会话成功读取过的最高级别（未读过任何内容时由调用方传入 0）；
-    范围 = agent 的可写范围。agent 无法通过参数或内容影响结果。
+
+def label_for_write(
+    agent: dict, session_max_level: int, mode: str = "taint", requested_level: object = None
+) -> tuple[int, str]:
+    """计算写入内容的级别和范围。
+
+    mode="taint"（默认，系统本身）：级别 = 本会话成功读取过的最高级别（会话污点），
+        requested_level 被忽略，agent 无法通过参数或内容影响结果。
+    mode="self"（HW7 基线）：级别 = agent 自己声明的 requested_level；
+        缺省或不是 0–3 的整数时按 0 处理。
+    两种模式下范围都是 agent 的可写范围。
     """
     if type(session_max_level) is not int or session_max_level not in LEVELS:
         raise ValueError(f"session_max_level 必须是 0–3 的整数，收到 {session_max_level!r}")
-    return session_max_level, agent["write_scope"]
+    if mode not in LABEL_MODES:
+        raise ValueError(f"mode 必须是 taint 或 self，收到 {mode!r}")
+    if mode == "taint":
+        return session_max_level, agent["write_scope"]
+    # type() 而非 isinstance()：排除 True/False（bool 是 int 的子类）
+    level = requested_level if type(requested_level) is int and requested_level in LEVELS else 0
+    return level, agent["write_scope"]
 
 
 # ---------------------------------------------------------------- 审核

@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 VALID_SCOPES = {"public", "finance", "support", "release", "rnd", "mgmt"}
 VALID_LANGS = {"zh", "en"}
+VALID_LABEL_MODES = {"taint", "self"}  # HW7 基线开关（I-7）
 
 
 class ConfigError(Exception):
@@ -32,6 +33,7 @@ class Config:
     lang: str
     review_timeout: int
     session_idle_seconds: int
+    label_mode: str = "taint"
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -48,6 +50,10 @@ class Config:
         if lang not in VALID_LANGS:
             raise ConfigError(f"MEMORY_LANG 只能是 zh 或 en，当前为 {lang!r}")
 
+        label_mode = os.environ.get("LABEL_MODE", "taint")
+        if label_mode not in VALID_LABEL_MODES:
+            raise ConfigError(f"LABEL_MODE 只能是 taint 或 self，当前为 {label_mode!r}")
+
         return cls(
             host=os.environ.get("MEMORY_HOST", "127.0.0.1"),
             port=port,
@@ -56,6 +62,7 @@ class Config:
             lang=lang,
             review_timeout=timeout,
             session_idle_seconds=idle,
+            label_mode=label_mode,
         )
 
 

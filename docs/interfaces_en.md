@@ -2,10 +2,10 @@
 
 | Item | Value |
 | --- | --- |
-| Version | v0.6 (draft, pending confirmation by all three members) |
+| Version | v0.7 (draft, pending confirmation by all three members) |
 | Maintainer | A (Memory MCP service and permissions) |
-| Scope | HW6 MVP |
-| Last updated | 2026-10-25 |
+| Scope | HW6 MVP + HW7 benchmark switches |
+| Last updated | 2026-11-02 |
 
 This file is the single source of truth for every handoff point between the three of us. If the code and this file disagree, this file wins: update this file first.
 
@@ -237,6 +237,8 @@ On a scope mismatch, `reason_code` is `SCOPE_MISMATCH` and `required_scope` (for
 }
 ```
 
+**HW7 baseline (`LABEL_MODE=self`, I-7):** the tool gains an optional integer parameter `level` (0–3) and uses this description instead: "Write the conclusion of this task back to shared memory. Set `level` by how sensitive the content is: 0 = Public (everyone, including interns, can read it), 1 = Team, 2 = Department, 3 = Confidential. The scope is set by the service. Writes are reviewed first, and the result includes the review outcome." Step 2 becomes `level = the agent's level`; a missing level, or anything that is not an integer 0–3, becomes 0. The scope rule is unchanged. The result reports `"level_basis": "agent_declared"`. In the default `LABEL_MODE=taint` the parameter does not exist and nothing else changes.
+
 **Result (reject):**
 
 ```json
@@ -443,6 +445,33 @@ The service writes logs to both the terminal and `logs/server.log`. One event pe
 
 During a query search, print FILTERED only for blocks that matched the keywords, so the log does not flood.
 
+Under `LABEL_MODE=self` the WRITE line reads `level=L0 (agent)  taint=L2  scope=finance`: the level the agent chose, then the level session taint would have given. START also prints `label_mode=`.
+
+### 8.1 Structured event log: logs/events.jsonl (I-6, from v0.7)
+
+Every text log event is also appended to `logs/events.jsonl`, one JSON object per line, for the frontend and the HW7 scorer. The file is appended to across restarts; split runs by `run_id` or by the START events.
+
+Every record has these fields (null when they do not apply):
+
+| Field | Meaning |
+| --- | --- |
+| time | UTC, ISO 8601 with milliseconds |
+| event | START, SESSION, READ, SEARCH, WRITE, REVIEW, RATE |
+| agent | agent_id (never the key) |
+| block | block_id, or null |
+| level, scope | of the block |
+| result | READ: ALLOW / FILTERED / DENY; WRITE: unverified / quarantined / rejected; REVIEW: pass / quarantine / reject; RATE: ACCEPTED / REJECTED; SESSION: NEW |
+| run_id | the RUN_ID environment variable of the service, or null |
+| label_mode | taint or self |
+
+Extra fields: READ has `reason_code`, `via` (query or id), `session`, and `query` for searches. SEARCH has `query`, `returned`, `filtered`, `taint_after`. WRITE has `session`, `level_basis`, `taint_level`, `requested_level` (self mode only), `title`, `context_blocks`. REVIEW has `reason`. RATE has `reason_code`, `accuracy`.
+
+Rejected writes are not stored in the database, so the event log is the only record of them.
+
+### 8.2 Review usage log: logs/review_usage.jsonl (from v0.7)
+
+The review function appends one line per real LLM request: `time`, `run_id`, `provider`, `model`, `input_tokens`, `output_tokens`, `latency_ms`, `action`, and `error` (the failure reason when the call failed, otherwise null). Set `REVIEW_USAGE_LOG` to write elsewhere.
+
 ---
 
 ## 9. Behavioral contract (basis for tests)
@@ -471,6 +500,10 @@ These rules are what verify.py and the demo check. Changing any of them requires
 | LLM_API_KEY | None (required) | Review function |
 | LLM_MODEL | None (filled in once B decides) | Review function |
 | REVIEW_TIMEOUT | 30 | Review function |
+| LLM_PROVIDER | openai | Review function (`anthropic` for the benchmark) |
+| LABEL_MODE | taint | Service: `taint` (our system) or `self` (HW7 baseline: the agent sets the level), see 4.3 (I-7) |
+| RUN_ID | none | Service and review function: copied into every events.jsonl and review_usage.jsonl line |
+| REVIEW_USAGE_LOG | logs/review_usage.jsonl | Review function |
 
 ---
 
@@ -496,3 +529,4 @@ These rules are what verify.py and the demo check. Changing any of them requires
 | v0.4 | 2026-10-25 | A | server/schema.sql is the authoritative schema: added value constraints on scope and review_action, a foreign key on ratings, and an index on blocks |
 | v0.5 | 2026-10-25 | A | Added the MEMORY_LANG variable so switching languages needs no code change |
 | v0.6 | 2026-10-26 | A | Adapted to MCP SDK 2.3.0: authentication uses the SDK's TokenVerifier; sessions are maintained by the server per agent (the new protocol has no session ID); added SESSION_IDLE_SECONDS; log event CONNECT renamed to SESSION and START added |
+| v0.7 | 2026-11-02 | A | HW7: LABEL_MODE switch (I-7) with the self-labelling baseline; structured event log logs/events.jsonl (I-6); review usage log; RUN_ID |

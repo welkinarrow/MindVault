@@ -11,6 +11,8 @@ Environment variables:
   LLM_BASE_URL    optional, for OpenAI-compatible providers
                   (default https://api.openai.com/v1)
   REVIEW_TIMEOUT  seconds, default 30
+  REVIEW_USAGE_LOG  optional; default logs/review_usage.jsonl. One JSON line per
+                  real LLM call: time, run_id, model, tokens, latency, action.
 
 Only the Python standard library is used, so nothing extra needs installing.
 """
@@ -25,6 +27,11 @@ import urllib.request
 ALLOWED_ACTIONS = ("pass", "quarantine", "reject")
 MAX_REASON = 200
 _PROMPT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompt.md")
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Filled in by the real _call_llm only, so offline tests that replace
+# _call_llm never write a usage line.
+_usage = {}
 
 
 def _result(action, reason):
@@ -74,6 +81,7 @@ def _call_llm(system_prompt, user_message, timeout):
         raise RuntimeError("LLM_API_KEY is not set")
     if not model:
         raise RuntimeError("LLM_MODEL is not set")
+    _usage.update(called=True, provider=provider, model=model)  # a real request is about to go out
 
     if provider == "anthropic":
         data = _post_json(
@@ -83,6 +91,8 @@ def _call_llm(system_prompt, user_message, timeout):
              "system": system_prompt,
              "messages": [{"role": "user", "content": user_message}]},
             timeout)
+        u = data.get("usage") or {}
+        _usage.update(input_tokens=u.get("input_tokens"), output_tokens=u.get("output_tokens"))
         return "".join(part.get("text", "") for part in data.get("content", [])
                        if part.get("type") == "text")
 
@@ -95,6 +105,8 @@ def _call_llm(system_prompt, user_message, timeout):
              "messages": [{"role": "system", "content": system_prompt},
                           {"role": "user", "content": user_message}]},
             timeout)
+        u = data.get("usage") or {}
+        _usage.update(input_tokens=u.get("prompt_tokens"), output_tokens=u.get("completion_tokens"))
         return data["choices"][0]["message"]["content"] or ""
 
     raise RuntimeError("unknown LLM_PROVIDER: " + provider)
@@ -124,7 +136,36 @@ def _parse_decision(text):
     return _result(action, reason)
 
 
+def _log_usage(result, seconds):
+    """Append one line to the usage log. Never raises."""
+    if not _usage.get("called"):
+        return
+    try:
+        path = os.environ.get("REVIEW_USAGE_LOG") or os.path.join(_ROOT, "logs", "review_usage.jsonl")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        line = {"time": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                "run_id": os.environ.get("RUN_ID") or None,
+                "provider": _usage.get("provider"), "model": _usage.get("model"),
+                "input_tokens": _usage.get("input_tokens"),
+                "output_tokens": _usage.get("output_tokens"),
+                "latency_ms": int(seconds * 1000), "action": result.get("action"),
+                "error": result["reason"] if result["reason"].startswith("Review failed") else None}
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(line, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 def review(title: str, content: str, context_blocks: list[dict]) -> dict:
+    """Same contract as _review(); also logs token usage for real LLM calls."""
+    _usage.clear()
+    start = time.monotonic()
+    result = _review(title, content, context_blocks)
+    _log_usage(result, time.monotonic() - start)
+    return result
+
+
+def _review(title: str, content: str, context_blocks: list[dict]) -> dict:
     """
     title, content: the write under review.
     context_blocks: at most 3, prepared by the service, containing only blocks

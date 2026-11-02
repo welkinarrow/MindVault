@@ -8,9 +8,10 @@
 
 import functools
 import logging
+import os
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:  # 允许用 python server/app.py 直接运行
@@ -33,6 +34,7 @@ except ModuleNotFoundError as e:
 
 from server.config import Config, ConfigError, find_agent, load_agents  # noqa: E402
 from server.db import Store  # noqa: E402
+from server.events import EventLog  # noqa: E402
 from server.service import MemoryService  # noqa: E402
 from server.sessions import SessionStore  # noqa: E402
 
@@ -47,6 +49,9 @@ DESCRIPTIONS = {
                 "状态为 unverified 的内容尚未验证，引用前请交叉核对。",
         "write": "把本次任务得出的结论写回共享 memory。级别和范围由服务根据本次会话读过的内容自动计算，你无法指定。"
                  "写入会先经过审核，返回结果中包含审核结论。",
+        "write_self": "把本次任务得出的结论写回共享 memory。用 level 按内容的敏感程度设定级别："
+                      "0 = 公开（实习生等所有人可读），1 = 团队，2 = 部门，3 = 机密。范围由服务设定。"
+                      "写入会先经过审核，返回结果中包含审核结论。",
         "rate": "任务结束后，给本次任务中读过、并在回答里引用过的 block 打分。只评准确性（1–5 分），每条必须写依据。"
                 "只能给本次会话读过的 block 打分，否则会被拒收。",
     },
@@ -58,6 +63,10 @@ DESCRIPTIONS = {
         "write": "Write the conclusion of this task back to shared memory. The level and scope are calculated "
                  "automatically by the service from what you read in this session; you cannot set them. "
                  "Writes are reviewed first, and the result includes the review outcome.",
+        "write_self": "Write the conclusion of this task back to shared memory. Set `level` by how sensitive "
+                      "the content is: 0 = Public (everyone, including interns, can read it), 1 = Team, "
+                      "2 = Department, 3 = Confidential. The scope is set by the service. Writes are "
+                      "reviewed first, and the result includes the review outcome.",
         "rate": "At the end of the task, rate the blocks you read in this task and cited in your answer. "
                 "Rate accuracy only (1-5) and give a reason for every score. You can only rate blocks you "
                 "read in this session; other ratings will be rejected.",
@@ -113,9 +122,20 @@ def build_server(cfg: Config, agents: list[dict], service: MemoryService) -> MCP
     async def memory_read(query: Optional[str] = None, block_id: Optional[str] = None) -> dict[str, Any]:
         return await call(service.read, query, block_id)
 
-    @mcp.tool(name="memory_write", description=texts["write"])
-    async def memory_write(title: str, content: str) -> dict[str, Any]:
-        return await call(service.write, title, content)
+    # HW7 基线开关（I-7）：只有 self 模式的 memory_write 才有 level 参数，
+    # taint 模式下 agent 根本看不到这个参数，也就无法指定级别
+    if cfg.label_mode == "self":
+        @mcp.tool(name="memory_write", description=texts["write_self"])
+        async def memory_write(
+            title: str,
+            content: str,
+            level: Annotated[int, Field(description="0 Public, 1 Team, 2 Department, 3 Confidential")] = 0,
+        ) -> dict[str, Any]:
+            return await call(service.write, title, content, level)
+    else:
+        @mcp.tool(name="memory_write", description=texts["write"])
+        async def memory_write(title: str, content: str) -> dict[str, Any]:
+            return await call(service.write, title, content)
 
     @mcp.tool(name="memory_rate", description=texts["rate"])
     async def memory_rate(ratings: list[RatingItem]) -> dict[str, Any]:
@@ -159,12 +179,17 @@ def main() -> None:
         print(f"启动失败：{e}", file=sys.stderr)
         sys.exit(1)
 
+    events = EventLog(ROOT / "logs" / "events.jsonl", run_id=os.environ.get("RUN_ID"),
+                      label_mode=cfg.label_mode)
     service = MemoryService(store, SessionStore(cfg.session_idle_seconds), agents,
-                            load_review_fn(cfg.lang), lang=cfg.lang)
+                            load_review_fn(cfg.lang), lang=cfg.lang,
+                            label_mode=cfg.label_mode, events=events)
     mcp = build_server(cfg, agents, service)
     log.info("%-10s %s", "[START]",
              f"http://{cfg.host}:{cfg.port}/mcp  agents={[a['agent_id'] for a in agents]}  "
-             f"lang={cfg.lang}  session_idle={cfg.session_idle_seconds}s")
+             f"lang={cfg.lang}  session_idle={cfg.session_idle_seconds}s  label_mode={cfg.label_mode}")
+    events.emit("START", result="ok", lang=cfg.lang, session_idle=cfg.session_idle_seconds,
+                db=str(cfg.db_path.name))
     mcp.run(transport="streamable-http", host=cfg.host, port=cfg.port)
 
 
