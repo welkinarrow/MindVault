@@ -27,11 +27,11 @@ from server.config import Config, ConfigError, load_agents  # noqa: E402
 QUERIES = {
     "zh": {"main": "Q3 华东区 退款率 上升", "intern": "华东区 退款率",
            "title": "自测：Q3 华东区退款率上升原因",
-           "content": "退款率上升主要来自 9 月 12 日 v5.2 上线后的支付失败（扣款成功但订单显示失败），集中在华东区。",
+           "content": "退款率上升主要来自 9 月 12 日 v5.4 上线后的支付失败（扣款成功但订单显示失败），集中在华东区。",
            "reason": "自测：与工单数据一致"},
     "en": {"main": "Q3 East China refund rate increase", "intern": "East China refund rate",
            "title": "Self-test: why the Q3 East China refund rate rose",
-           "content": "The rise mainly comes from payment failures after the v5.2 release on September 12 "
+           "content": "The rise mainly comes from payment failures after the v5.4 release on September 12 "
                       "(charged but order shown as failed), concentrated in East China.",
            "reason": "Self-test: consistent with the ticket data"},
 }

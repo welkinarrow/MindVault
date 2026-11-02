@@ -4,7 +4,7 @@ A shared memory service for multiple AI agents, with built-in permissions and re
 
 Agents read and write a common pool of memory "blocks" through three MCP tools. The service decides what each agent may see, works out how sensitive each new write is, sends every write through an LLM review step, and lets agents rate the blocks they used.
 
-> **Status:** HW6 MVP, design stage. The interface contract is drafted ([interfaces_en.md](interfaces_en.md), v0.1). The implementation has not been committed yet.
+> **Status:** HW6 MVP implemented and tested (`python -m unittest discover -s tests`). HW7 adds a baseline switch (`LABEL_MODE`), a structured event log and the benchmark data in `bench/`. Interface contract: [docs/interfaces_en.md](docs/interfaces_en.md) (v0.7).
 
 ## How it works
 
@@ -34,7 +34,7 @@ Agents read and write a common pool of memory "blocks" through three MCP tools. 
 | `memory_write` | Save a task conclusion (`title`, `content`); returns the review result |
 | `memory_rate` | Rate the accuracy of blocks read in this session |
 
-Denials and bad input come back as normal tool results with a `reason_code` (for example `LEVEL_TOO_LOW` or `SCOPE_MISMATCH`), not as protocol errors. Inputs, outputs, and error codes are specified in [interfaces_en.md §4](interfaces_en.md).
+Denials and bad input come back as normal tool results with a `reason_code` (for example `LEVEL_TOO_LOW` or `SCOPE_MISMATCH`), not as protocol errors. Inputs, outputs, and error codes are specified in [interfaces_en.md §4](docs/interfaces_en.md).
 
 ## Repository layout (planned)
 
@@ -59,11 +59,13 @@ Denials and bad input come back as normal tool results with a `reason_code` (for
 | `LLM_API_KEY` | none (required) | Used by the review function |
 | `LLM_MODEL` | to be decided | Used by the review function |
 | `REVIEW_TIMEOUT` | `30` | Review call timeout in seconds |
+| `LABEL_MODE` | `taint` | `taint` = session taint sets the level; `self` = HW7 baseline, the agent sets it |
+| `RUN_ID` | none | Tags every line of `logs/events.jsonl` and `logs/review_usage.jsonl` |
 
 Agents authenticate with `Authorization: Bearer <key>`, using a 32-character hex key from `config/agents.json`. Never commit keys. Copy `agents.example.json` to `agents.json` and fill in the keys locally.
 
 ## Contributing
 
-[interfaces_en.md](interfaces_en.md) is the single source of truth for every handoff between components. If the code and the contract disagree, the contract wins. To change the contract, raise it in the group chat. Once all three members agree, A updates the file, bumps the version, and adds an entry to its change log.
+[docs/interfaces_en.md](docs/interfaces_en.md) is the single source of truth for every handoff between components. If the code and the contract disagree, the contract wins. To change the contract, raise it in the group chat. Once all three members agree, A updates the file, bumps the version, and adds an entry to its change log.
 
-Open questions (Hermes header support, LLM choice, timeouts) are tracked in [interfaces_en.md §11](interfaces_en.md).
+Open questions (Hermes header support, LLM choice, timeouts) are tracked in [interfaces_en.md §11](docs/interfaces_en.md).

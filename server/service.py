@@ -9,6 +9,7 @@ import logging
 from typing import Any, Callable, Optional
 
 from server.db import Store
+from server.events import NULL_EVENTS, EventLog
 from server.policy import can_read, check_review_action, denial, label_for_write
 from server.search import search
 from server.sessions import Session, SessionStore
@@ -75,6 +76,8 @@ class MemoryService:
         agents: list[dict],
         review_fn: ReviewFn,
         lang: str = "zh",
+        label_mode: str = "taint",
+        events: Optional[EventLog] = None,
     ):
         self.store = store
         self.sessions = sessions
@@ -83,6 +86,10 @@ class MemoryService:
         self.review_fn = review_fn
         self.lang = lang
         self.t = TEXTS[lang]
+        if label_mode not in ("taint", "self"):
+            raise ValueError(f"label_mode 必须是 taint 或 self，收到 {label_mode!r}")
+        self.label_mode = label_mode
+        self.events = events if events is not None else NULL_EVENTS
 
     # ------------------------------------------------------------ 公共工具
 
@@ -97,6 +104,7 @@ class MemoryService:
         session, created = self.sessions.current(agent_id)
         if created:
             _event("SESSION", agent_id, f"new session={session.session_id}")
+            self.events.emit("SESSION", agent=agent_id, result="NEW", session=session.session_id)
         return agent, session
 
     # ------------------------------------------------------------ memory_read
@@ -120,33 +128,52 @@ class MemoryService:
 
     def _read_by_query(self, agent: dict, session: Session, query: str) -> dict:
         result = search(query, self.store.all_blocks(), agent, limit=READ_LIMIT)
+        aid = agent["agent_id"]
         for block, code in result.filtered:
-            _event("READ", agent["agent_id"], block["block_id"], _label(block), f"FILTERED {code}")
+            _event("READ", aid, block["block_id"], _label(block), f"FILTERED {code}")
+            self._read_event(aid, session, block, "FILTERED", code, via="query", query=query)
         out = []
         for block in result.results:
             self.sessions.record_read(session, block)
-            _event("READ", agent["agent_id"], block["block_id"], _label(block), "ALLOW")
+            _event("READ", aid, block["block_id"], _label(block), "ALLOW")
+            self._read_event(aid, session, block, "ALLOW", None, via="query", query=query)
             out.append(_pick(block, PUBLIC_FIELDS))
+        self.events.emit("SEARCH", agent=aid, result=f"{len(out)} returned", session=session.session_id,
+                         query=query, returned=[b["block_id"] for b in out],
+                         filtered=[b["block_id"] for b, _ in result.filtered],
+                         taint_after=self.sessions.max_level(session))
         return {"results": out, "data_notice": self.t["data_notice"]}
+
+    def _read_event(self, agent_id: str, session: Session, block: Optional[dict], result: str,
+                    code: Optional[str], *, via: str, block_id: Optional[str] = None, **extra) -> None:
+        self.events.emit(
+            "READ", agent=agent_id, block=block["block_id"] if block else block_id,
+            level=block["level"] if block else None, scope=block["scope"] if block else None,
+            result=result, reason_code=code, via=via, session=session.session_id, **extra,
+        )
 
     def _read_by_id(self, agent: dict, session: Session, block_id: str) -> dict:
         block = self.store.get_block(block_id)
         if block is None:
             _event("READ", agent["agent_id"], block_id, "-", "DENY NOT_FOUND")
+            self._read_event(agent["agent_id"], session, None, "DENY", "NOT_FOUND", via="id", block_id=block_id)
             return denial("NOT_FOUND", block_id, lang=self.lang)
 
         code = can_read(agent, block)
         if code is not None:
             _event("READ", agent["agent_id"], block_id, _label(block), f"DENY {code}")
+            self._read_event(agent["agent_id"], session, block, "DENY", code, via="id")
             return denial(code, block_id, block, lang=self.lang)
 
         self.sessions.record_read(session, block)
         _event("READ", agent["agent_id"], block_id, _label(block), "ALLOW")
+        self._read_event(agent["agent_id"], session, block, "ALLOW", None, via="id")
         return {"results": [_pick(block, PUBLIC_FIELDS)], "data_notice": self.t["data_notice"]}
 
     # ------------------------------------------------------------ memory_write
 
-    def write(self, agent_id: str, title: object, content: object) -> dict:
+    def write(self, agent_id: str, title: object, content: object, level: object = None) -> dict:
+        """level 只在 label_mode="self"（HW7 基线）时使用；taint 模式下忽略。"""
         agent, session = self._begin(agent_id)
         if agent is None:
             return self._error("INVALID_KEY", self.t["unknown_agent"])
@@ -155,8 +182,14 @@ class MemoryService:
         if not _is_text(content, MAX_CONTENT):
             return self._error("INVALID_INPUT", self.t["bad_content"])
 
-        # 级别和范围只由会话和 agent 决定，与内容无关
-        level, scope = label_for_write(agent, self.sessions.max_level(session))
+        # taint 模式：级别和范围只由会话和 agent 决定，与内容无关
+        # self 模式（基线）：级别由 agent 声明；同时记下污点会给出的级别，便于对比
+        taint_level = self.sessions.max_level(session)
+        requested = level
+        level, scope = label_for_write(agent, taint_level, self.label_mode, requested)
+        basis = "session_max_read" if self.label_mode == "taint" else "agent_declared"
+        level_text = (f"level=L{level} (session max)" if self.label_mode == "taint"
+                      else f"level=L{level} (agent)  taint=L{taint_level}")
 
         # 审核上下文：只包含写入者有权读的 block
         ctx = search(f"{title} {content}", self.store.all_blocks(), agent, limit=CONTEXT_LIMIT)
@@ -170,12 +203,20 @@ class MemoryService:
         action, reason = check_review_action(raw, lang=self.lang)
 
         result = {"block_id": None, "level": level, "scope": scope,
-                  "level_basis": "session_max_read", "status": None,
+                  "level_basis": basis, "status": None,
                   "review": {"action": action, "reason": reason}}
 
+        write_fields = dict(agent=agent_id, level=level, scope=scope, session=session.session_id,
+                            level_basis=basis, taint_level=taint_level,
+                            requested_level=requested if self.label_mode == "self" else None,
+                            title=title, context_blocks=[b["block_id"] for b in context])
+
         if action == "reject":
-            _event("WRITE", agent_id, "-> (rejected)", f"level=L{level} (session max)", f"scope={scope}")
+            _event("WRITE", agent_id, "-> (rejected)", level_text, f"scope={scope}")
             _event("REVIEW", "-", "reject", f'"{reason}"')
+            self.events.emit("WRITE", block=None, result="rejected", **write_fields)
+            self.events.emit("REVIEW", agent=agent_id, block=None, level=level, scope=scope,
+                             result="reject", reason=reason, session=session.session_id)
             return result
 
         status = "unverified" if action == "pass" else "quarantined"
@@ -183,8 +224,11 @@ class MemoryService:
             title=title, content=content, level=level, scope=scope, status=status,
             author=agent_id, review_action=action, review_reason=reason,
         )
-        _event("WRITE", agent_id, f"-> {new_id}", f"level=L{level} (session max)", f"scope={scope}")
+        _event("WRITE", agent_id, f"-> {new_id}", level_text, f"scope={scope}")
         _event("REVIEW", new_id, action, f'"{reason}"')
+        self.events.emit("WRITE", block=new_id, result=status, **write_fields)
+        self.events.emit("REVIEW", agent=agent_id, block=new_id, level=level, scope=scope,
+                         result=action, reason=reason, session=session.session_id)
         result.update(block_id=new_id, status=status)
         return result
 
@@ -205,6 +249,10 @@ class MemoryService:
             acc = item.get("accuracy") if isinstance(item, dict) else "?"
             verdict = "ACCEPTED" if outcome["accepted"] else f"REJECTED {outcome['reason_code']}"
             _event("RATE", agent_id, shown, f"accuracy={acc}", verdict)
+            self.events.emit("RATE", agent=agent_id, block=shown,
+                             result="ACCEPTED" if outcome["accepted"] else "REJECTED",
+                             reason_code=outcome.get("reason_code"), accuracy=acc,
+                             session=session.session_id)
         return {"results": results}
 
     def _rate_one(self, agent_id: str, session: Session, item: object) -> dict:
