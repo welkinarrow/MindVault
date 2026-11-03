@@ -1,0 +1,1 @@
+{"label": "Scripted demo · LABEL_MODE=taint", "note": "frontend/demo_scenario.py against the real service; stub reviewer (no LLM key in this recording)", "seed_file": "data/seed_blocks.json"}
