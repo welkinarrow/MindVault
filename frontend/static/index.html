@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0a0b">
+<title>MindVault · control room</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo"><span></span></div>
+    <div>
+      <div class="brand-name">MindVault</div>
+      <div class="brand-sub">shared memory for company agents · control room</div>
+    </div>
+  </div>
+
+  <div class="seg" id="modeSeg" role="tablist" aria-label="Mode">
+    <button data-mode="live" class="on"><i class="dot live"></i>Live</button>
+    <button data-mode="replay"><i class="dot"></i>Replay</button>
+  </div>
+
+  <div class="chips">
+    <span class="chip" id="labelMode" title="LABEL_MODE of the service run">label: —</span>
+    <span class="chip mono" id="runId" title="RUN_ID">run: —</span>
+    <span class="chip" id="conn"><i class="dot"></i>connecting</span>
+  </div>
+
+  <div class="seg small" id="viewSeg" aria-label="View as">
+    <span class="seg-label">view as</span>
+    <button data-view="all" class="on">all</button>
+  </div>
+</header>
+
+<div class="alarm" id="alarm" hidden>
+  <strong>LEAK</strong><span id="alarmText"></span>
+</div>
+
+<section class="stats" id="stats">
+  <div class="stat"><div class="stat-k">Reads allowed</div><div class="stat-v" id="sAllow">0</div><div class="stat-f" id="sAllowF">by query and by id</div></div>
+  <div class="stat"><div class="stat-k">Blocked</div><div class="stat-v warn" id="sBlocked">0</div><div class="stat-f" id="sBlockedF">filtered 0 · denied 0</div></div>
+  <div class="stat"><div class="stat-k">Writes</div><div class="stat-v" id="sWrites">0</div><div class="stat-f" id="sWritesF">reviewed before they land</div></div>
+  <div class="stat big"><div class="stat-k">Writer's session taint</div><div class="stat-v" id="sTaint">L0</div><div class="taintbar" id="sTaintBar"><i></i><i></i><i></i><i></i></div></div>
+  <div class="stat"><div class="stat-k">Ratings</div><div class="stat-v" id="sRates">0</div><div class="stat-f" id="sRatesF">accepted 0 · rejected 0</div></div>
+  <div class="stat"><div class="stat-k">Leaks to lower levels</div><div class="stat-v" id="sLeaks">0</div><div class="stat-f" id="sLeaksF">reader below the writer's taint</div></div>
+</section>
+
+<main class="grid">
+  <aside class="panel agents">
+    <div class="panel-h"><h2>Agents</h2><span class="hint">who can see what</span></div>
+    <div id="agentList"></div>
+  </aside>
+
+  <section class="panel vault">
+    <div class="panel-h">
+      <h2>Memory vault</h2>
+      <div class="legend">
+        <span><i class="lv l0"></i>L0 public</span><span><i class="lv l1"></i>L1 team</span>
+        <span><i class="lv l2"></i>L2 dept</span><span><i class="lv l3"></i>L3 confidential</span>
+        <span><i class="st unv"></i>unverified</span><span><i class="st qua"></i>quarantined</span>
+      </div>
+    </div>
+    <div id="floors"></div>
+    <svg id="beams" aria-hidden="true"></svg>
+  </section>
+
+  <aside class="panel stream">
+    <div class="panel-h"><h2>Event stream</h2><span class="hint" id="evCount">0 events</span></div>
+    <ol id="events"></ol>
+  </aside>
+</main>
+
+<section class="lower">
+  <div class="panel">
+    <div class="panel-h"><h2>Session taint over time</h2><span class="hint">highest level each session has read; a write inherits it</span></div>
+    <svg id="taintChart" viewBox="0 0 640 190" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><h2>HW7 · taint vs self-labelling</h2><span class="hint" id="hw7src">bench/results</span></div>
+    <div id="hw7"></div>
+  </div>
+</section>
+
+<footer class="replay" id="replayBar" hidden>
+  <select id="source" aria-label="Replay source"></select>
+  <button id="bBack" title="Restart (Home)">⏮</button>
+  <button id="bPlay" class="play" title="Play / pause (Space)">▶</button>
+  <button id="bStep" title="Step (→)">⏭</button>
+  <div class="speed" id="speedSeg">
+    <button data-s="0.5">½×</button><button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="4">4×</button>
+  </div>
+  <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Position">
+  <span class="mono" id="pos">0 / 0</span>
+</footer>
+
+<div class="drawer" id="drawer" hidden>
+  <button class="x" id="drawerX" aria-label="Close">×</button>
+  <div id="drawerBody"></div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
