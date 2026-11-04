@@ -1,0 +1,9 @@
+Customer satisfaction fell in Q3. Overall CSAT was 4.1 out of 5, down 0.2 points from 4.3 in Q2. The most common negative themes were delivery speed and checkout problems. Both facts come from b-601, "Q3 customer satisfaction survey summary", which is marked verified.
+
+This rests on a single block. Other searches returned only refund-rate and support-ticket blocks (b-101, b-103, b-207), and I didn't read those. I have no second source for the CSAT numbers.
+
+One tool hiccup: my first search call returned a "transport session expired, outcome unknown" error. It was a read-only query, so I re-ran the searches with no side effects.
+
+I saved the conclusion as block w-0001. The review passed, and the service set it to level 1 with scope finance. Its status is unverified, as with any new write. I rated b-601 at accuracy 5, and the rating was accepted. It was the only block I cited.
+
+session_id: local-8706e464087394dfd90fc19a3eb1f165fa0efa29c8248c5bdbced0e348357e84

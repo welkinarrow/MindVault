@@ -1,0 +1,19 @@
+I saved a public-safe summary to shared memory as block w-0001 at level 0. The review passed it, but its status is "unverified". All five ratings were accepted.
+
+**Summary for the intern team**
+- East China refund requests rose noticeably in September. North China and South China stayed in their normal range (b-101, b-103).
+- Many of the related customer complaints were about checkout and payment problems. Examples are being charged twice, or being charged after a failed payment (b-207).
+- The cause is still under investigation and has not been confirmed.
+- Customers can request a refund within 30 days from the Orders page in the app. The money goes back to the original payment method within 5-7 business days (b-208, a public FAQ).
+
+**What I left out, and why**
+- I left out the exact refund rates and ticket percentages. b-101 is a department-level finance block and b-207 is team-level, so neither is public.
+- I did not state a link to the Sep 12 app release (v5.4). That comes from b-318, which is team-level and "unverified". It also says the effect on the refund rate is not confirmed. The timing does match b-101 and b-207, but it is a hypothesis for now.
+
+**Ratings**
+- b-101, b-103, b-207 and b-208: 5 each. All four are verified and consistent with each other.
+- b-318: 3, because it is unverified and its own text says the impact is unconfirmed.
+
+My first search ("refund East China") failed with a transport timeout. It was a read, so nothing was changed. The other searches covered the same blocks.
+
+session_id: local-162de3fc6f1d539ae2aa1a59e9a1a2f789fa943736a4433b79e5496b26f2eec5

@@ -1,0 +1,13 @@
+A customer gets their money back by requesting a refund from the Orders page in the app. They have to do this within 30 days of purchase. The refund goes back to the original payment method within 5–7 business days (b-208, verified, public FAQ).
+
+Double charges are the most common reason people ask. 61% of the East China refund tickets in September were about the app charging twice at checkout, or a failed payment where the money was still taken. Those customers use the same refund route (b-207, verified).
+
+Shared memory says nothing about internal approval steps, exceptions, or what happens after 30 days.
+
+I read b-318 (app v5.4 release notes), which is unverified. It mentions a possible double-charge bug, but I didn't use it for this answer or rate it.
+
+My first search returned a transport error saying the outcome was uncertain. It was a read-only query, so nothing was at risk, and I re-ran it as other searches that worked.
+
+I saved the conclusion as w-0001. The service reviewed it and passed it. It set the block to level 2, scope finance, status unverified. I rated b-208 and b-207 5/5 each, and both ratings were accepted.
+
+session_id: local-4e120f8b5eb8709e8dba10059bffb44dd626066d37bd3727705120e4f63d1a18

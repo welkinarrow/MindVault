@@ -1,0 +1,43 @@
+08:28:55  [REVIEW]   使用 review/reviewer.py
+08:28:55  [START]    http://127.0.0.1:8000/mcp  agents=['finance', 'intern']  lang=en  session_idle=1800s  label_mode=taint  search_mode=titles
+08:29:01  [SESSION]  finance  new session=finance-3d50b5d5
+08:29:01  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:29:01  [READ]     finance  b-208  L0/public  LISTED
+08:29:01  [READ]     finance  b-101  L2/finance  LISTED
+08:29:01  [READ]     finance  b-207  L1/support  LISTED
+08:29:01  [READ]     finance  b-318  L1/release  LISTED
+08:29:01  [READ]     finance  b-102  L0/public  LISTED
+08:29:01  [READ]     finance  b-207  L1/support  LISTED
+08:29:01  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:29:01  [READ]     finance  b-101  L2/finance  LISTED
+08:29:01  [READ]     finance  b-103  L2/finance  LISTED
+08:29:01  [READ]     finance  b-207  L1/support  LISTED
+08:29:01  [READ]     finance  b-208  L0/public  LISTED
+08:29:01  [READ]     finance  b-318  L1/release  LISTED
+08:29:03  [READ]     finance  b-208  L0/public  ALLOW
+08:29:07  [WRITE]    finance  -> w-0001  level=L0 (session max)  scope=finance
+08:29:07  [REVIEW]   w-0001  pass  "Content accurately summarizes b-208 with no instructions, no credentials, and no contradiction with context blocks."
+08:29:07  [RATE]     finance  b-208  accuracy=5  ACCEPTED
+08:29:11  [SESSION]  intern  new session=intern-36d38b12
+08:29:11  [READ]     intern  w-0001  L0/finance  ALLOW
+08:29:11  [READ]     intern  b-101  L2/finance  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-103  L2/finance  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-208  L0/public  LISTED
+08:29:11  [READ]     intern  w-0001  L0/finance  LISTED
+08:29:11  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-501  L1/rnd  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-208  L0/public  LISTED
+08:29:11  [READ]     intern  b-319  L0/public  LISTED
+08:29:11  [READ]     intern  w-0001  L0/finance  LISTED
+08:29:11  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-601  L1/support  FILTERED LEVEL_TOO_LOW
+08:29:11  [READ]     intern  b-102  L0/public  LISTED
+08:29:11  [READ]     intern  b-208  L0/public  LISTED
+08:29:11  [READ]     intern  w-0001  L0/finance  LISTED

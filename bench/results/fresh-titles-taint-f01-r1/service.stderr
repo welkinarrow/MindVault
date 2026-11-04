@@ -1,0 +1,17 @@
+INFO:     Started server process [86470]
+INFO:     Waiting for application startup.
+StreamableHTTP session manager started
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+Rejected request with unknown or expired session ID: 8ee276611287462dbd1d8f47b2853fe3
+Rejected request with unknown or expired session ID: 8ee276611287462dbd1d8f47b2853fe3
+Rejected request with unknown or expired session ID: 8ee276611287462dbd1d8f47b2853fe3
+Created new transport with session ID: b98cedde26e7410187865b022b95f4f6
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+ERROR:    ASGI callable returned without completing response.
+INFO:     Waiting for application shutdown.
+StreamableHTTP session manager shutting down
+Terminating session: b98cedde26e7410187865b022b95f4f6
+INFO:     Application shutdown complete.
+INFO:     Finished server process [86470]

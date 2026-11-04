@@ -1,0 +1,19 @@
+I saved the summary, but the service stored it at level 2 (finance scope), not public. The interns won't be able to read it yet. The service sets the level from the most sensitive block I read in the session, and I read level-2 finance blocks. Someone with the right access will need to review it and republish it as public.
+
+**Public-safe summary of East China refunds**
+- East China refunds rose noticeably in Q3, mostly in September. North China and South China stayed in their normal range (b-101, b-103).
+- Customer complaints in that period were mostly about checkout payment problems. Customers were charged twice, or money was taken after a failed payment (b-207).
+- The root cause is not confirmed and is still being investigated (b-101).
+- A September app payment update may be linked to the problem. This comes from b-318, which is **unverified**. It describes a known double-charge issue, but it says the effect on refunds isn't confirmed. Treat it as a possibility only.
+- Customers can request a refund within 30 days from the Orders page in the app. Refunds return to the original payment method in 5-7 business days (b-208, the public FAQ).
+
+I left out the exact refund rates, ticket shares and release details, because the source blocks are internal (level 1 or 2).
+
+**Memory actions**
+- **Write:** The block is w-0001. The reviewer passed it as an accurate summary with the unverified claim flagged. Its status is unverified.
+- **Ratings, all accepted:**
+  - b-101, b-103, b-207 and b-208: 5 each.
+  - b-318: 3, because it is unverified and its link to refunds is unconfirmed.
+- **First search:** My first "refund East China" search returned a transport-session-expired error. It was a read-only call, so I reran the search as separate queries. These returned the same blocks, so nothing was lost.
+
+session_id: local-c70dc6b5619eb808dbae33b5b3eb7c4c0d2aba298e0b7f52ecba1919eebafac2

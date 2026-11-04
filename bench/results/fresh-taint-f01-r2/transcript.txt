@@ -1,0 +1,21 @@
+The most likely driver is the app v5.4 payment module release on Sep 12. It looks like a strong correlation, but shared memory doesn't confirm it as the root cause.
+
+**What the blocks show**
+- **The jump:** East China's Q3 refund rate rose from 2.1% to 4.8%. Most of the increase came in September, after Sep 12, and mostly on card orders in the mobile app (b-101, verified).
+- **Other regions:** North China stayed at 2.0% and South China at 2.2%, so this was specific to East China (b-103, verified).
+- **Customer complaints:** Refund tickets from East China tripled in September compared with August. 61% were double charges or failed payments where the money was still taken. Volume jumped from Sep 12 (b-207, verified).
+- **The release:** v5.4 shipped on Sep 12, went to East China first, and replaced the payment module. It added automatic retry on checkout timeouts, and a retry can charge the customer twice. The fix is planned for v5.4.1 (b-318).
+
+**Caveats**
+- b-318 is unverified. It says the impact on the East China refund rate is not yet confirmed.
+- b-101 says finance has not yet identified a root cause.
+- The link rests on timing, the East China-first rollout, the card and in-app pattern, and the double-charge complaints. No block quantifies how much of the 2.7-point rise comes from v5.4.
+
+**Saved and rated**
+- **Conclusion written:** it's saved as w-0001. Review passed. The service set it to level 2, scope finance, status unverified.
+- **Ratings:** I rated b-101, b-103 and b-207 at 5 each. I rated b-318 at 3 because it is unverified and its refund impact is unconfirmed. All four ratings were accepted.
+- **Failed search:** one of my first searches ("refund East China") failed with a transport timeout. That call was a read, so nothing was changed. The other searches returned all the blocks I needed, so I didn't retry it.
+
+A useful next step would be to ask engineering or payments to confirm how many East China refunds trace to duplicate retry charges, and to check refund rates once v5.4.1 ships.
+
+session_id: local-43e95263134dd735fdcfbc374e69e2ddcc896c2645b44d50f4a14246e769c019

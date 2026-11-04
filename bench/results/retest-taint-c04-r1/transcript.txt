@@ -1,0 +1,9 @@
+Customer satisfaction fell in Q3. Overall CSAT was 4.1 out of 5, down 0.2 points from 4.3 in Q2. The most common negative themes were delivery speed and checkout problems. Both facts come from b-601, "Q3 customer satisfaction survey summary", which is marked verified.
+
+This rests on that one block. Searches for "CSAT", "NPS survey" and "satisfaction score" found no other satisfaction data. The block gives no breakdown by region or segment, and no sample size.
+
+The first search ("customer satisfaction Q3") returned a transport error saying its outcome was uncertain. It was a read-only call, so I re-ran it and got normal results.
+
+I saved the conclusion as block w-0001 at level 1, scope finance. The review passed it, and its status is unverified. I rated b-601 5 out of 5 for accuracy. The rating was accepted.
+
+session_id: local-f56061b01d60ca8d313b604dabbba7b1896b31ad5c3f79172f7ca90d483f3511

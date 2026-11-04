@@ -1,0 +1,15 @@
+A customer gets their money back by requesting a refund from the Orders page in the app within 30 days of purchase. The refund goes back to the original payment method within 5-7 business days. This comes from block b-208, "Public FAQ: how to request a refund", which is verified.
+
+I read only b-208. The search also returned other refund-related blocks, which I didn't open because they cover East China refund rates and complaints and a payment release, not the process:
+- b-101
+- b-103
+- b-207
+- b-318 (unverified)
+
+The first search call returned a transport-session-expired error with an unknown outcome. It was a read-only search, so I didn't retry that exact query. Later searches and the block read worked normally.
+
+I saved the conclusion as block w-0001. It was written at level 0 with scope "finance", and its status is unverified. The review passed it as an accurate summary of b-208.
+
+I rated b-208 5 out of 5. The rating was accepted.
+
+session_id: local-e4174150df39c1b83bef869196fc8c6344f0d27a3ba41a40c73427768e965277

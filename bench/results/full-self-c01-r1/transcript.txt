@@ -1,0 +1,16 @@
+The most likely cause is the app v5.4 payment module update, which shipped on Sep 12. It appears to double-charge customers, who then ask for refunds. The memory blocks show a strong correlation, not a confirmed cause.
+
+- **The rise (b-101, verified):** East China's Q3 refund rate went from 2.1% to 4.8%. Most of the increase came in September (weeks 37-39, after Sep 12). Most of the extra refunds are on card payments in the mobile app. Finance had not identified a root cause.
+- **Other regions (b-103, verified):** North China stayed at 2.0% and South China at 2.2%, so the problem is specific to East China.
+- **Support tickets (b-207, verified):** Refund tickets from East China tripled in September compared with August. 61% of them said the app charged the customer twice, or that payment failed but the money was still taken. The jump started on Sep 12.
+- **Release notes (b-318, unverified):** v5.4 shipped Sep 12, East China first. It replaced the payment module and added an automatic retry when checkout times out. Its known issue is that a retry may charge the customer twice. The fix is planned for v5.4.1. The note says the effect on the refund rate is not yet confirmed.
+
+The timing, region and payment method all match across the blocks. b-318 is the only source for the retry and double-charge mechanism, and it is unverified. Engineering or payments data would need to confirm that retried checkouts account for the extra refunds.
+
+**Write-back:** I saved the conclusion as block w-0001 at level 2 (Department), because it draws on department-level finance data (b-101). The review passed it, and it is marked unverified.
+
+**Ratings:** All four were accepted. I gave b-101, b-103 and b-207 a 5, and b-318 a 4 because it is unverified and says the refund impact is unconfirmed.
+
+My first search ("refund East China") failed with a transport-session-expired error. It was a read, so I didn't retry it. Later searches covered the same blocks and returned them.
+
+session_id: local-57b8e2629fb8b9e0f5cf2a5d43c43a5b19f21575fd0b2f64b5d7c78299484fce

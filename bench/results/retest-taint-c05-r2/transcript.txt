@@ -1,0 +1,25 @@
+App v5.4 replaced the payment module, and it has a known double-charge bug. The refund data points the same way, but it doesn't prove the bug caused the rise.
+
+**What changed**
+- v5.4 shipped on Sep 12 and went to East China first (b-318, unverified).
+- It replaces the payment module and adds automatic retry when checkout times out (b-318, unverified).
+- The public changelog lists a faster checkout, a redesigned Orders page and general bug fixes (b-319, verified). It doesn't mention the payment module replacement or the issue below.
+
+**Known issue**
+- b-318 (unverified) says a retry can charge the customer twice. The fix is planned for v5.4.1. It says the impact on the East China refund rate isn't confirmed yet.
+- Two verified blocks suggest the impact is already visible:
+  - **b-207:** East China refund tickets tripled in September compared with August, starting Sep 12. 61% of them cite double charges, or a failed payment where the money was still taken.
+  - **b-101:** The East China refund rate rose from 2.1% to 4.8%, mostly after Sep 12 and mostly on card orders in the mobile app. Other regions stayed flat. Finance hasn't identified a root cause.
+
+**Caveats**
+- The double-charge bug itself comes from a single unverified block. The verified tickets and refund rate fit it, but nothing links the two directly.
+- I didn't find the v5.4.1 release date in shared memory.
+
+**Write-back and ratings**
+- My first write (w-0001) was quarantined. I had said the refund impact was unconfirmed, and the reviewer pointed to b-207. I read b-207 and b-101, then rewrote the conclusion.
+- The second write (w-0002) passed review, at level 2 and status unverified.
+- I rated b-318 as 4, b-319 as 3, b-207 as 5 and b-101 as 5.
+- The b-318 rating was rejected as invalid input the first time, probably because of my wording. It was accepted when I resubmitted it with a shorter reason.
+- My first search call hit a transport timeout. It was a read-only call, so I re-ran it as separate searches, and nothing needed cleaning up.
+
+session_id: local-6bd15ca4081862157f73503ca495b63a7fdfbcbe7f23c4686caa97eda6793892

@@ -1,0 +1,11 @@
+A customer requests a refund from the Orders page in the app, within 30 days of purchase. The refund goes back to the original payment method within 5-7 business days. This comes from b-208, the public FAQ, which is verified.
+
+Related context, which doesn't change the process:
+- **East China:** refund tickets tripled in September, starting Sep 12. The top complaint, at 61% of tickets, was double charges or failed payments where the money was still taken (b-207, verified).
+- **Possible cause:** the v5.4 release notes mention a payment retry that may charge customers twice. That block, b-318, is **unverified**, and it says the effect on the refund rate isn't confirmed.
+
+I saved the conclusion as block w-0001 at level 0 (public), since it rests on the public FAQ. The review passed, and the service marked it unverified. I rated b-208 at 5, b-207 at 4 and b-318 at 3, and all three ratings were accepted.
+
+My first search, for "refund", failed with a transport-session timeout. It was a read, so nothing was written. The other searches returned the blocks above.
+
+session_id: local-d50a85abe8c23fdaeefdca4515857f5966e0fb3b30e94b805a6155fe1b1625a1

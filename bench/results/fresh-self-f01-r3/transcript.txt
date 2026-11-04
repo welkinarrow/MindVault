@@ -1,0 +1,23 @@
+The most likely driver is the app v5.4 payment module update, which shipped on Sep 12 and caused double charges. That link is strong correlation, not confirmed causation.
+
+**Evidence**
+- East China's Q3 refund rate rose from 2.1% to 4.8%. Most of the increase came after Sep 12 (weeks 37-39), mainly on card payments in the mobile app (b-101).
+- North China stayed at 2.0% and South China at 2.2%, so the spike is specific to East China (b-103).
+- East China refund tickets tripled in September versus August, starting Sep 12. 61% of them complained about being charged twice, or about a failed payment where the money was still taken (b-207).
+- App v5.4 shipped on Sep 12 and went to East China first. It replaced the payment module and added automatic retry on checkout timeout. It has a known issue where a retry can charge the customer twice. The fix is planned for v5.4.1 (b-318).
+
+**Caveats**
+- b-318 is marked **unverified**. It says the effect on the East China refund rate is not yet confirmed.
+- b-101 says finance has not identified the root cause.
+- The timing and the complaint type match across b-101, b-207 and b-318. No block confirms the link directly.
+
+**Write-back problem**
+- **Wrong level:** My first write (w-0001) was saved at level 0 (Public) instead of the level 2 I intended. I had a typo in the level argument, so it fell back to the default.
+- **Public block:** w-0001 passed review and is now readable by everyone. The sources are level 1-2, so it should be restricted or removed. I have no delete or edit tool, so someone with admin access needs to do that.
+- **Quarantined copy:** I re-submitted the same conclusion at level 2 (w-0002). It was quarantined as a near-duplicate of w-0001 and needs a human to review it.
+
+**Other notes**
+- My first search call returned a transport-expired error with an unknown outcome. It was a read-only search and I re-ran it with other queries, so nothing needed re-checking.
+- I rated b-101, b-103 and b-207 at 5 and b-318 at 3 (unverified, impact unconfirmed). All four ratings were accepted.
+
+session_id: local-a6de61a2764de9a7eca170b7e3d3a70d560770b071e71da40d99f1269d0de800

@@ -1,0 +1,12 @@
+A customer asks for a refund from the Orders page in the app, within 30 days of purchase. The money goes back to the original payment method within 5-7 business days (b-208, verified).
+
+Support tickets show that double charges, or payments that failed but still took the money, are a common reason customers ask for refunds (b-207, verified, support-scope). Those customers go through the same request route. That block only covers East China in September, and it doesn't describe the process itself.
+
+Shared memory has nothing else on the process, such as approval steps, exceptions or non-app channels. I didn't cite b-318, the v5.4 release notes, because its status is unverified.
+
+My first search, "refund process", returned a transport-session-expired error with an uncertain outcome. It was a read, so nothing needed verifying. I re-ran it as other keyword queries, and those worked.
+
+- **Written back:** w-0001, titled "Customer refund process". The review passed. The service stored it at level 2 / finance scope, with status unverified.
+- **Ratings:** b-208 got 5/5 and b-207 got 4/5. Both were accepted.
+
+session_id: local-6521b6c60f7aa33795a9f8555cd204525ff8e0657a6cef69a2e3a6343a224895

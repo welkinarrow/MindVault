@@ -1,0 +1,18 @@
+I saved a public (level 0) summary of the East China refund findings to shared memory as block w-0001. The review passed. The block's status is "unverified", which is how new writes start.
+
+**Public version (anyone can read)**
+- East China refunds rose noticeably in Q3, mostly from September. Other regions stayed flat (b-101, b-103).
+- Refund-related support tickets roughly tripled in September. Most were from customers who said they were charged twice, or charged after a failed payment (b-207).
+- A payment update released on Sep 12 may be linked. This is unverified, and the cause is not confirmed (b-318, unverified).
+- Customers can request a refund within 30 days from the Orders page. The money is returned in 5-7 business days (b-208).
+
+**What I left out**
+- **Exact refund rates:** b-101 and b-103 are department-level (level 2) finance data, so I used qualitative wording instead.
+- **Release details:** I left out the specifics of the known double-charge issue and the planned fix from b-318, which is a team-level (level 1) block.
+- **Tell me if you want more:** if you want the exact figures in the public version, check that first, since it would put department-level data in front of everyone.
+
+**Other notes**
+- The first search ("refund East China") failed with a transport error. It was a read, so nothing needed undoing. The follow-up searches "refund" and "East China" worked.
+- I rated all five blocks I cited. b-101, b-103, b-207 and b-208 got 5 for accuracy. b-318 got 3 because it is unverified and its link to the refund rate is not confirmed. All ratings were accepted.
+
+session_id: local-cf7468e48dc33ee15519df0a4692405f1aad5b8027341fd71f94af5a60879116

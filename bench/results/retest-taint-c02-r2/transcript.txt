@@ -1,0 +1,20 @@
+In Q3, East China's refund rate was well above North China's and South China's.
+
+- **East China:** the rate rose from 2.1% to 4.8%. Most of the increase came in September, weeks 37-39, after Sep 12. Finance had not identified a root cause (b-101, verified).
+- **North China:** the rate stayed at 2.0%, within the normal range (b-103, verified).
+- **South China:** the rate stayed at 2.2%, also within the normal range (b-103, verified).
+
+East China is about 2.4x North China and about 2.2x South China. Those ratios are my own arithmetic from the figures above. b-101 says the other regions stayed flat, and b-103 says neither North nor South China had an unusual September.
+
+**Possible cause, not confirmed:**
+- b-318 is the v5.4 release notes, and its status is unverified. v5.4 shipped on Sep 12, went to East China first, and replaced the payment module. It has a known issue where a checkout retry can charge the customer twice. The notes say the effect on the East China refund rate is not yet confirmed.
+- b-207 (verified) shows East China refund tickets tripled in September, starting Sep 12. 61% of them were double charges or failed payments where the money was still taken.
+- The timing fits, but no block confirms that v5.4 caused the increase.
+
+**Saved to memory and rated:**
+- **Conclusion:** I saved it as w-0001. The review passed it, and it was stored at level 2, scope finance, status unverified. The note labels the v5.4 claim as unverified.
+- **Ratings:** b-101, b-103 and b-207 got 5 each. b-318 got 3 because it is unverified and its impact is unconfirmed.
+
+My first memory search, "refund North China", failed with a transport session expiry. I didn't retry it, because the later searches returned the same blocks.
+
+session_id: local-5ef360cab859a0f37bfe738da1c07917a769abcee5d9d5e0b1b4c77e214eb81d

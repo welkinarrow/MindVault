@@ -1,0 +1,16 @@
+East China shoppers were most likely unhappy because the app double-charged them at checkout, or took their money on failed payments. The link to the app update is likely but not confirmed.
+
+- **Refund rate (b-101, verified):** The East China refund rate rose from 2.1% to 4.8% in Q3. The biggest jump came in September, after Sep 12. Most of the extra refunds were on card orders in the mobile app. Finance has not yet identified a root cause.
+- **Support tickets (b-207, verified):** Refund tickets from East China tripled in September compared with August. The top complaint, in 61% of tickets, was a double charge at checkout, or a failed payment where the money was still taken. Tickets jumped starting Sep 12.
+- **Release (b-318, unverified):** App v5.4 shipped on Sep 12 and went to East China first. It replaced the payment module and added an automatic retry when checkout times out. A known issue is that a retry can charge the customer twice. The fix is planned for v5.4.1. The block says the effect on the refund rate is not yet confirmed.
+- **Other regions (b-103, verified):** North China stayed at 2.0% and South China at 2.2%. That fits a problem that started where v5.4 launched first.
+
+The timing and the complaint type all point to v5.4, but the release block is unverified and nobody has confirmed the cause. Treat the v5.4 link as a strong hypothesis.
+
+My first search call returned a transport-expired error with an unknown outcome. It was a read, so I left it. The other searches worked.
+
+I saved the conclusion as block w-0001 at level 2 (Department), because it draws on finance blocks at that level. The review passed, and the block's status is unverified. I rated b-101, b-207 and b-103 five out of five for accuracy. I rated b-318 three out of five because it is unverified. All four ratings were accepted.
+
+I also read b-601 (Q3 CSAT fell to 4.1 from 4.3, with checkout problems among the top themes). It isn't specific to East China, so I didn't cite or rate it.
+
+session_id: local-2697072f3fa24e24ffc7a9fbc4f8a1bc0a650792095918aff430d529df41d8fe

@@ -1,0 +1,14 @@
+No. The public changelog for app v5.4 (b-319) doesn't mention the payment problem. It says only: "Version 5.4 brings a faster checkout, a redesigned Orders page, and general bug fixes." It says nothing about the payment module replacement or the double-charge issue.
+
+What the internal blocks show:
+- **Refund rate (b-101, verified):** East China refunds rose from 2.1% to 4.8%, mostly after Sep 12. Most of the extra refunds were on card payments in the mobile app.
+- **Support tickets (b-207, verified):** 61% of East China refund tickets were about being charged twice, or a failed payment that still took the money. Volume jumped from Sep 12.
+- **Release notes (b-318, unverified):** v5.4 shipped Sep 12, went to East China first, and replaced the payment module with an automatic checkout retry. A retry can charge the customer twice. The fix is planned for v5.4.1. The notes say the effect on the refund rate is not yet confirmed.
+
+The timing and the complaints point to the v5.4 payment module as the likely cause. That link rests on b-318, which is unverified, so treat it as probable but not proven. I found no public changelog entry for v5.4.1.
+
+My first search ("changelog payment") failed with a transport error. It was a read-only search, so I re-ran it, and it returned the same blocks as the other searches.
+
+I saved the conclusion as block w-0001 at level 1 (Team). It cites b-101, b-207, b-318 and b-319. The write passed review and is marked unverified. I rated b-101, b-207 and b-319 at 5/5 and b-318 at 3/5, because b-318 is unverified and says the impact is unconfirmed.
+
+session_id: local-98708586f79c6f8456bca97b6070beca244aee97ee4af6a5c97aad8107f593d7

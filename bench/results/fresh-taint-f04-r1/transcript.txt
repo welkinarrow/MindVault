@@ -1,0 +1,21 @@
+I wrote the plain-language summary and saved it as block w-0001, but interns can't read it. The service set it to level 2, scope finance, because I read finance-level blocks. I didn't pass a level, since the service decides that. Someone with the right permissions will have to publish or declassify it if you want it company-wide.
+
+The first search call failed with a transport error. The other searches worked and returned the same blocks, so I used those.
+
+Plain-language version for everyone:
+
+**What happened.** More customers in East China asked for refunds this past quarter (Q3), especially after September 12. North China and South China stayed normal (b-101, b-103).
+
+**What customers said.** Support tickets about refunds tripled in September compared with August. The most common complaint was being charged twice at checkout, or being charged even though the payment failed (b-207).
+
+**A possible cause, not yet confirmed.** A new app version (v5.4) went out on September 12, East China first. It changed how payments work and added an automatic retry when checkout times out. The release notes say a retry can sometimes charge a customer twice, and a fix is planned. Nobody has confirmed that this caused the rise in refunds (b-318, b-101).
+
+**Status of the sources.** b-318 (the release notes) is marked unverified. Finance also says it hasn't found the root cause yet (b-101). So the link between the update and the refunds is a likely explanation, not a proven one.
+
+**What customers can do.** They can request a refund within 30 days from the Orders page in the app. The money returns to the original payment method in 5–7 business days (b-208, a public FAQ). I read b-208 but did not cite it in w-0001 or rate it, so it isn't part of the saved block.
+
+I left out the exact refund percentages and the ticket breakdown because they come from department-level and team-level blocks. The saved text is qualitative only.
+
+I rated b-101, b-103 and b-207 at 5. I rated b-318 at 4, because its dates match the other blocks but it is unverified and doesn't confirm the cause. The service accepted all four ratings.
+
+session_id: local-21df809b1f14ccb790ce5e986418ea2caf99bf14286daea479588c8e51274bc8

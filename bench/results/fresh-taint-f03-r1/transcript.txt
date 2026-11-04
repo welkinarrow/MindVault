@@ -1,0 +1,10 @@
+A customer gets their money back by requesting a refund from the Orders page in the app within 30 days of purchase. The refund goes back to the original payment method within 5-7 business days. This comes from b-208, the public FAQ, which is verified.
+
+No other block describes a different or extra step in the process.
+
+- **Blocks not used:** b-207 (verified) and b-318 (unverified) cover the East China double-charge complaints. They explain why refund volume rose, not how a refund works, so I didn't rely on them. I mention b-318's unverified status only because the write-up refers to it.
+- **Failed search:** My first search ("refund process") failed with an expired-session error. It was a read, so repeating it was safe, and the later searches returned the blocks above.
+- **Saved conclusion:** I saved it as block w-0001. The review passed, but the service set it to level 2, scope finance and status unverified, even though I asked for level 0. If it should be public, someone will need to change that.
+- **Rating:** I rated b-208 5/5 for accuracy, and the rating was accepted. It is the only block I relied on.
+
+session_id: local-f2f1be1ba2a4413062386798476b814315c05c08afc0a411ce65ee5edd9aae8f

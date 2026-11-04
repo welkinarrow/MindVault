@@ -1,0 +1,20 @@
+App v5.4 shipped on Sep 12 and was rolled out to East China first. Its payment module has a known double-charge problem, but the source describing it is unverified.
+
+**What changed**
+- The public changelog says v5.4 brings a faster checkout, a redesigned Orders page and general bug fixes (b-319, verified).
+- The release note says it replaces the payment module and adds automatic retry when checkout times out (b-318, **unverified**). The public changelog doesn't mention this.
+
+**Known issues**
+- b-318 (**unverified**) says a retry can charge the customer twice. A fix is planned for v5.4.1. The impact on the East China refund rate is not yet confirmed.
+- Verified blocks support this:
+  - East China refund tickets tripled in September versus August. 61% of them cite double charges, or a failed payment that still took the money. The jump started Sep 12 (b-207).
+  - The East China Q3 refund rate rose from 2.1% to 4.8%, mostly after Sep 12 and mostly on card payments in the mobile app. Other regions stayed flat, and finance hasn't identified a root cause (b-101).
+
+The timing fits the double-charge issue, but no block confirms that v5.4 caused the refund increase.
+
+**Housekeeping**
+- One of my first search calls (v5.4 release) failed with a transport error. It was a read, and the later searches returned the same blocks, so nothing was lost.
+- I saved the conclusion as w-0001 at level 2 (Department), because it includes finance refund figures. It passed review and its status is unverified.
+- I rated b-318 (4), b-319 (4), b-207 (5) and b-101 (5), and all four ratings were accepted.
+
+session_id: local-68a9eacd7ae8e0239957d0af60c0669a5d23dedcc364d01f862a218f5f071b8f

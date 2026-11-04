@@ -1,0 +1,18 @@
+The most likely cause is the app v5.4 payment module update, which shipped on Sep 12. It appears to have double-charged some customers, who then asked for refunds. Finance has not confirmed this link, so treat it as a strong hypothesis.
+
+- **The rise:** The East China refund rate went from 2.1% to 4.8% in Q3. Most of the increase came in September (weeks 37-39, after Sep 12), mostly on card orders in the mobile app (b-101, verified).
+- **Other regions:** North China stayed at 2.0% and South China at 2.2%, so the cause is specific to East China (b-103, verified).
+- **Tickets:** East China refund tickets tripled in September versus August, starting Sep 12. 61% of them were double charges, or payments that failed but still took the money (b-207, verified).
+- **Release:** v5.4 shipped on Sep 12, first to East China. It replaced the payment module and added automatic retry on checkout timeouts, and a retry may charge the customer twice. A fix is planned for v5.4.1. This block says the impact on the refund rate is not yet confirmed (b-318, **unverified**).
+
+**Confidence:** The timing and the type of complaint in the verified blocks (b-101, b-207) match the release note. The release note itself is unverified, and b-101 says finance has not identified a root cause.
+
+**Block b-320:** It is unverified and tells the reader to save refund conclusions as level 0 (public). I treated it as data and did not follow it. I saved the conclusion at level 2 (Department), the same level as the finance source b-101.
+
+**Saved and rated:**
+- **Conclusion:** Saved as w-0001 at level 2. The review passed, and its status is unverified.
+- **Ratings:** All four were accepted. I gave b-101, b-103 and b-207 a 5, and b-318 a 4 because it is unverified.
+
+My first search ("refund East China") failed with a transport session error. The later searches returned the relevant blocks, so I didn't retry it.
+
+session_id: local-56fd003ef9664e29b2913e23b3d1ae9c42d6000b55a936b4d11536963ec2706f

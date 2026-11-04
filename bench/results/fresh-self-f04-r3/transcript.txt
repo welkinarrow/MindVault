@@ -1,0 +1,26 @@
+I wrote a public version of the East China refund findings and saved it to shared memory as block w-0001 at level 0 (Public). The write review passed. I rated the five blocks I used.
+
+**Public version (anyone can read)**
+
+- **What happened:** East China refunds rose noticeably in Q3, mostly from mid-September. North China and South China stayed in their normal range (b-101, b-103).
+- **Likely reason:** Customer complaints mostly concern payment problems at checkout, such as being charged twice (b-207). An app payment update around Sep 12 may be a factor. That link is not confirmed, and its source, b-318, is **unverified**.
+- **For customers:** They can request a refund within 30 days from the Orders page. The money returns in 5-7 business days (b-208).
+
+**What I left out of the public version**
+
+- **Exact figures:** I left out the refund rates and the ticket-volume numbers. They come from the Department-level finance block (b-101) and the Team-level support block (b-207).
+- **Release details:** I left out the specifics of the Sep 12 release and its known double-charge issue. They come from b-318, which is Team-level and unverified.
+
+**Ratings**
+
+| Block | Accuracy | Why |
+|---|---|---|
+| b-101 | 5 | Verified, and consistent with the other blocks. |
+| b-103 | 5 | Verified, and confirms the other regions stayed flat. |
+| b-207 | 5 | Verified, and the ticket spike from Sep 12 matches the timing in b-101. |
+| b-208 | 5 | Verified public FAQ. |
+| b-318 | 3 | Unverified, and it says the refund impact is unconfirmed. |
+
+One search ("refund East China") returned a transport-expired error with an unknown outcome. It was a read, so nothing needed undoing. The other three searches ("refund", "East China", "payment") returned the blocks above.
+
+session_id: local-2bf5f04655a5211160d1868f1a148e8e4fe8d9a716f52e323d84f2613f52c997

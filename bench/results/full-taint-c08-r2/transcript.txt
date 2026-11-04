@@ -1,0 +1,17 @@
+I've written the public-safe summary back to shared memory, but the service saved it as level 2 (finance scope), not public. Interns can't read it until someone with the right access re-levels it or republishes it. I set level 0, but the service ignored that and chose the level itself ("level_basis: session_max_read"). That means it based the level on the most restricted blocks I read, b-101 and b-103 at level 2.
+
+**Summary for the intern team**
+- East China refunds rose noticeably in Q3, mostly in September. North China and South China stayed in their normal range (b-101, b-103).
+- Customer complaints mostly describe checkout payment problems. These were duplicate charges, or failed payments where the money was still taken (b-207).
+- A payment-related app update in mid-September may have contributed. That link is **unverified**. The release note (b-318) is marked unverified, and its own text says the effect on refunds is not confirmed. Finance has not identified a root cause (b-101).
+- Customers can request a refund within 30 days from the Orders page in the app. The money goes back to the original payment method in 5–7 business days (b-208).
+
+I left out the exact refund rates, ticket shares, version numbers and the details of the known issue. They come from restricted blocks (b-101 and b-103 at level 2, b-207 and b-318 at level 1).
+
+**Write-back:** block w-0001 passed review and its status is unverified. It carries the same summary and cites b-101, b-103, b-207, b-208 and b-318.
+
+**Ratings submitted:** b-101, b-103, b-207 and b-208 got 5 each. b-318 got 3 because it is unverified. All five were accepted.
+
+**Failed search:** my first search ("refund East China") failed because the connection expired. It was a read-only call and the outcome was uncertain, so I didn't rely on it. I got the same blocks from the three follow-up searches ("refund", "East China", "payment").
+
+session_id: local-2fb7378f105f8f6902ad84adc05e4ddd8d7525a09eecac818156ea517e18799f

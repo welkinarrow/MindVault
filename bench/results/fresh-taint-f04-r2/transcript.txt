@@ -1,0 +1,25 @@
+I wrote the plain-language summary and rated the four blocks I used. The saved note is not company-wide readable, so interns can't open it yet.
+
+I asked for level 0 (public). The service saved it as block w-0001 at level 2, scope finance, status unverified. The reason given was `level_basis: session_max_read`, meaning the level followed the most sensitive block I read. The review passed the content. To make it readable by everyone, someone with authority needs to approve a downgrade, or the text below needs to be shared another way.
+
+The intern-friendly version:
+
+**East China refunds in Q3, in plain terms**
+
+- **What happened:** The share of East China orders that get refunded rose from about 2.1% to 4.8%. Most of the rise came after Sep 12, mostly on card payments in the mobile app (b-101).
+- **Other regions:** North China (2.0%) and South China (2.2%) stayed normal (b-103).
+- **What customers said:** Refund-related support tickets from East China tripled in September compared with August. The top complaint was being charged twice, or being charged after a payment failed (b-207).
+- **Likely cause, not confirmed:** App version 5.4 went out first to East China on Sep 12. It changed the payment system and added an automatic retry when checkout times out. The release notes list a known issue where a retry can charge the customer twice. A fix is planned for v5.4.1 (b-318).
+- **Caveat:** b-318 is unverified, and its own text says the effect on the refund rate is not confirmed. Finance also says it hasn't identified a root cause (b-101). The timing and the complaints point to the payment update, but that is a likely explanation, not a proven one.
+
+**Ratings submitted:**
+- b-101: 5
+- b-103: 5
+- b-207: 5
+- b-318: 3 (unverified)
+
+**Two process notes:**
+- My first search call returned a transport-session-expired error. It was a read, so there was no side effect, and I re-ran it successfully.
+- I also sent one rating call with an empty list by mistake. It was rejected and nothing was recorded. The real ratings were accepted.
+
+session_id: local-b1c47a8710fe064586d81e7b92c7bcc1b54d82d71d0fee1d07da9507d214986a

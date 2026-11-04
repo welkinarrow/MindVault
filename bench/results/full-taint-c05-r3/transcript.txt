@@ -1,0 +1,22 @@
+App v5.4 has one known issue: a retry can charge customers twice. The only block that says so is unverified.
+
+**What changed**
+- v5.4 shipped on Sep 12 and went to East China first (b-318, unverified).
+- It replaces the payment module and adds automatic retry when checkout times out (b-318, unverified).
+- The public changelog describes it as a faster checkout, a redesigned Orders page and general bug fixes (b-319, verified). It doesn't mention the payment module change or the issue below.
+
+**Known issue**
+- b-318 is unverified. It says that when a retry fires, the customer may be charged twice. The issue is under investigation, a fix is planned for v5.4.1, and the effect on the East China refund rate isn't confirmed.
+
+**Verified data that fits, but doesn't prove the cause**
+- The East China Q3 refund rate rose from 2.1% to 4.8%, mostly after Sep 12. Other regions stayed flat. Finance hasn't identified a root cause (b-101).
+- East China refund tickets tripled in September, starting Sep 12. 61% of them were double charges, or payments that failed but still took the money (b-207).
+
+The timing matches, but no block confirms that v5.4 caused the refund increase.
+
+**Housekeeping**
+- My first search call returned a transport-expired error with an unknown outcome. The two later searches worked, so I didn't retry it.
+- I saved the conclusion as w-0001. The review passed it, and the service set it to level 2, scope finance, status unverified.
+- I rated the four blocks I cited: b-318 (4), b-319 (4), b-101 (5), b-207 (5). All four ratings were accepted.
+
+session_id: local-f1663254e02de59fd0d9f9d4d50c703d7bf65eb6fc764d99e9b0d346567a1342

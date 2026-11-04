@@ -1,0 +1,52 @@
+08:02:34  [REVIEW]   使用 review/reviewer.py
+08:02:34  [START]    http://127.0.0.1:8000/mcp  agents=['finance', 'intern']  lang=en  session_idle=1800s  label_mode=taint  search_mode=full
+08:02:40  [SESSION]  finance  new session=finance-99231d1e
+08:02:40  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:02:40  [READ]     finance  b-101  L2/finance  ALLOW
+08:02:40  [READ]     finance  b-207  L1/support  ALLOW
+08:02:40  [READ]     finance  b-318  L1/release  ALLOW
+08:02:40  [READ]     finance  b-103  L2/finance  ALLOW
+08:02:40  [READ]     finance  b-208  L0/public  ALLOW
+08:02:40  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:02:40  [READ]     finance  b-207  L1/support  ALLOW
+08:02:40  [READ]     finance  b-318  L1/release  ALLOW
+08:02:40  [READ]     finance  b-101  L2/finance  ALLOW
+08:02:40  [READ]     finance  b-102  L0/public  ALLOW
+08:02:40  [READ]     finance  b-103  L2/finance  ALLOW
+08:02:40  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:02:40  [READ]     finance  b-501  L1/rnd  FILTERED SCOPE_MISMATCH
+08:02:40  [READ]     finance  b-207  L1/support  ALLOW
+08:02:40  [READ]     finance  b-101  L2/finance  ALLOW
+08:02:40  [READ]     finance  b-103  L2/finance  ALLOW
+08:02:40  [READ]     finance  b-208  L0/public  ALLOW
+08:02:40  [READ]     finance  b-318  L1/release  ALLOW
+08:02:50  [WRITE]    finance  -> w-0001  level=L2 (session max)  scope=finance
+08:02:50  [REVIEW]   w-0001  pass  "Business summary accurately reflects b-207, b-101, b-318; correctly flags v5.4 link as unverified; no instructions or injections."
+08:02:53  [RATE]     finance  b-207  accuracy=5  ACCEPTED
+08:02:53  [RATE]     finance  b-101  accuracy=5  ACCEPTED
+08:02:53  [RATE]     finance  b-103  accuracy=5  ACCEPTED
+08:02:53  [RATE]     finance  b-318  accuracy=4  REJECTED INVALID_INPUT
+08:02:55  [RATE]     finance  b-318  accuracy=4  ACCEPTED
+08:03:00  [SESSION]  intern  new session=intern-ce775fc5
+08:03:00  [READ]     intern  w-0001  L2/finance  DENY LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-101  L2/finance  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-103  L2/finance  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  w-0001  L2/finance  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-208  L0/public  ALLOW
+08:03:00  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-501  L1/rnd  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  w-0001  L2/finance  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-208  L0/public  ALLOW
+08:03:00  [READ]     intern  b-319  L0/public  ALLOW
+08:03:00  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-601  L1/support  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  w-0001  L2/finance  FILTERED LEVEL_TOO_LOW
+08:03:00  [READ]     intern  b-102  L0/public  ALLOW
+08:03:00  [READ]     intern  b-208  L0/public  ALLOW

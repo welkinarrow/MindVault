@@ -1,0 +1,18 @@
+Customer satisfaction fell in Q3. Overall CSAT was 4.1 out of 5, down from 4.3 in Q2 (b-601, verified). The most common negative themes were delivery speed and checkout problems.
+
+Supporting evidence:
+- **Checkout complaints:** East China refund tickets tripled in September compared with August, and the jump started on Sep 12. The top complaint, at 61% of tickets, was double charges or failed payments where the money was still taken (b-207, verified). This fits the checkout theme in b-601.
+- **Possible cause (unverified):** The release note for app v5.4 (b-318) says the payment module was replaced on Sep 12, starting in East China. It also says a retry could charge customers twice. The note is marked unverified and says the impact on refunds isn't confirmed. I'm treating this as a lead, not a confirmed cause of the CSAT drop.
+
+I found no data in shared memory on the delivery-speed theme beyond its mention in b-601. I also found no regional CSAT breakdown, so I can't say how much of the 0.2-point drop comes from East China.
+
+**Write-back:** I saved the conclusion as block w-0001. The review passed, and the service set it to level 2, scope finance, status unverified.
+
+**Ratings:**
+- b-601: 5
+- b-207: 5
+- b-318: 3 (unverified, and it says its own impact is unconfirmed)
+
+My first search call returned a transport-expired error. It was a read-only query, so I re-ran it, and the retry succeeded.
+
+session_id: local-5d59f7614cdbe240bbce08fc926fc108fba2b3ca66525aa55fe132f7baf241bc

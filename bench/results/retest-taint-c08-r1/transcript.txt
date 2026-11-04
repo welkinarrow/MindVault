@@ -1,0 +1,22 @@
+I saved the summary and rated the four blocks I used. The service didn't keep it public, though: it stored the summary as w-0001 at level 2 (finance scope), so interns probably can't read it yet.
+
+I asked for level 0, but the service set the level from the most sensitive block I read, and that was b-101 at level 2. The review passed it as accurate with no sensitive data. If interns need it, someone with authority should republish or downgrade it, or it should be rewritten from public material only.
+
+**Public-safe summary**
+- **What happened:** Refunds in East China rose noticeably in Q3, mostly after mid-September. Other regions stayed flat (b-101).
+- **What customers reported:** Support saw many more refund requests over the same period. Most were about checkout payment problems, such as being charged twice or being charged after a failed payment (b-207).
+- **Possible cause:** A mid-September app payment change is being looked at as a factor. That link is **unverified**, because b-318 is marked unverified and says the impact on refunds isn't confirmed. Finance also hasn't identified a root cause (b-101).
+- **Refund process:** Customers can request a refund within 30 days from the Orders page. The money goes back to the original payment method in 5–7 business days (b-208).
+
+I left out the internal figures, the ticket breakdown percentages and the release version details. They come from level 1–2 blocks and shouldn't go to interns.
+
+**Process notes**
+- My first search call hit a transport error. It was a read-only search, so nothing was at risk, and I re-ran the searches successfully.
+- My first write attempt failed on a malformed call, so I retried. Only one block, w-0001, was written.
+- Ratings, all accepted:
+  - b-101: 5
+  - b-207: 5
+  - b-208: 5
+  - b-318: 3, because it is unverified and its refund impact is unconfirmed.
+
+session_id: local-4ca568e71c8cd6fbcfc8e0d35538e5ce8fe3cfd5d3f6bfae40a2c3f3901884a5

@@ -1,0 +1,1 @@
+{"time": "2026-11-04T07:47:50-0500", "run_id": "full-taint-c01-r1", "provider": "anthropic", "model": "claude-sonnet-4-6", "input_tokens": 1115, "output_tokens": 50, "latency_ms": 1833, "action": "pass", "error": null}

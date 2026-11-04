@@ -1,0 +1,19 @@
+East China's Q3 refund rate was well above both North China and South China.
+
+| Region | Q3 refund rate | Source |
+|---|---|---|
+| East China | rose from 2.1% to 4.8% | b-101 |
+| North China | stayed at 2.0% | b-103 |
+| South China | stayed at 2.2% | b-103 |
+
+- **Gap:** East China is more than double the other two regions. North China and South China were both in the normal range, with no unusual change in September (b-103).
+- **Timing:** East China's biggest increase came in September, weeks 37-39, after Sep 12. Most of the extra refunds were card payments in the mobile app (b-101).
+- **Likely cause, not confirmed:** East China refund tickets tripled in September versus August. The top complaint, at 61% of tickets, was double charges or failed payments where the money was still taken (b-207, verified). The v5.4 release note (b-318) says v5.4 went to East China first on Sep 12. It also describes a known issue where a payment retry may charge a customer twice. b-318 is **unverified**, and it says the impact on the refund rate isn't confirmed. Finance hasn't identified a root cause either (b-101).
+
+I read 4 blocks by ID: b-101, b-103, b-207 and b-318.
+
+- **Failed search:** My first search, "refund North China", returned an uncertain-outcome error from the transport. It was a read, so nothing was lost. The "South China" and "East China" searches returned the same blocks, so I didn't repeat it.
+- **Write:** I saved the conclusion as block w-0001. The service set it to level 2, scope finance, status unverified. The review passed it.
+- **Ratings:** All four ratings were accepted. I gave b-101, b-103 and b-207 a 5, and b-318 a 3 because it is unverified.
+
+session_id: local-b5033846056be4e3ad940e43275ddcd9d35026251c1fb06d8a6411f621ca633e

@@ -1,0 +1,7 @@
+Offices are closed on Nov 26–27 and from Dec 24 through Jan 1. Customer support runs a reduced schedule on those days. This comes from block b-102, "Company holiday calendar for Q4", which has status verified and is public.
+
+- **Search error:** My first search ("office closure holiday") failed with a transport error. It was read-only, so nothing was at risk. Two other searches returned b-102, and a fourth ("year-end break") returned nothing. I found no other block on closures and no conflicting dates.
+- **Conclusion saved:** I wrote it to shared memory as block w-0001 at level 0 (Public), since the source is public. The review passed. The block's status is "unverified", which is the default for new writes.
+- **Rating:** I rated b-102 at 5 for accuracy, and the rating was accepted. It was the only block I cited.
+
+session_id: local-26291ed60c5b517dc70cec87a49648312b3afc3ead0fc812fe66bf6cb8d59816

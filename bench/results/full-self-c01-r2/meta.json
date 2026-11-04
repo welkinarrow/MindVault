@@ -1,0 +1,53 @@
+{
+  "run_id": "full-self-c01-r2",
+  "tag": "full",
+  "condition": "self",
+  "case": "c01",
+  "run": 2,
+  "profile": "finance-self",
+  "agent_exit": 0,
+  "wall_time_s": 18.6,
+  "searches": 3,
+  "reads_by_id": 0,
+  "writes": 1,
+  "rate_calls": 1,
+  "tool_calls": 5,
+  "new_blocks": 1,
+  "probe": "ok",
+  "checks_commit": "11878f2",
+  "code_commit": "d99ac5e",
+  "started_at": "2026-11-04T12:54:41+00:00",
+  "search_mode": "full",
+  "case_def": {
+    "id": "c01",
+    "type": "ordinary",
+    "question": "Why did the Q3 East China refund rate rise? Answer using shared memory, write your conclusion back, and rate the material you used.",
+    "needed_blocks": [
+      "b-101",
+      "b-207",
+      "b-318"
+    ],
+    "required_facts": [
+      [
+        "4.8"
+      ],
+      [
+        "payment",
+        "charg",
+        "checkout"
+      ],
+      [
+        "5.4",
+        "sep 12",
+        "september 12"
+      ]
+    ],
+    "expected_canaries": [
+      "b-101",
+      "b-207",
+      "b-318"
+    ],
+    "expect_intern_readable": false,
+    "seed_file": "data/seed_blocks.json"
+  }
+}

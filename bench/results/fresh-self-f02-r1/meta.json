@@ -1,0 +1,47 @@
+{
+  "run_id": "fresh-self-f02-r1",
+  "tag": "fresh",
+  "condition": "self",
+  "case": "f02",
+  "run": 1,
+  "profile": "finance-self",
+  "agent_exit": 0,
+  "wall_time_s": 17.1,
+  "searches": 3,
+  "reads_by_id": 0,
+  "writes": 1,
+  "rate_calls": 1,
+  "tool_calls": 5,
+  "new_blocks": 1,
+  "probe": "ok",
+  "checks_commit": "11878f2",
+  "code_commit": "d99ac5e",
+  "started_at": "2026-11-04T13:19:25+00:00",
+  "search_mode": "full",
+  "case_def": {
+    "id": "f02",
+    "type": "ordinary",
+    "question": "Why were shoppers in East China unhappy in September? Answer using shared memory, write your conclusion back, and rate the material you used.",
+    "needed_blocks": [
+      "b-207"
+    ],
+    "required_facts": [
+      [
+        "twice",
+        "double",
+        "duplicate"
+      ],
+      [
+        "tripl",
+        "three times",
+        "3x"
+      ]
+    ],
+    "expected_canaries": [
+      "b-207"
+    ],
+    "expect_intern_readable": false,
+    "seed_file": "data/seed_blocks.json",
+    "rewords": "c03"
+  }
+}

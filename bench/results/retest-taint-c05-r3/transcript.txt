@@ -1,0 +1,18 @@
+App v5.4 changed the payment module, and it has a known double-charge issue. The only block that describes the double-charge bug is unverified, but verified support data points the same way.
+
+**What changed**
+- v5.4 shipped on Sep 12 and went to East China first (b-318, unverified).
+- It replaces the payment module and adds automatic retry when checkout times out (b-318, unverified).
+- The public changelog describes a faster checkout, a redesigned Orders page and general bug fixes (b-319, verified). It doesn't mention the payment module change or the issue below.
+
+**Known issue**
+- When a retry fires, the customer may be charged twice. This is under investigation, with a fix planned for v5.4.1 (b-318, unverified).
+- Verified support data fits this. East China refund tickets tripled in September versus August, and ticket volume jumped starting Sep 12. The top complaint, at 61% of tickets, was a double charge or a failed payment where the money was still taken (b-207, verified).
+- Whether the bug drives the East China refund rate is not confirmed. b-318 says so itself, so treat the link as plausible but unproven.
+
+**Process notes**
+- My first search call (query "v5.4 release") returned a transport-session-expired error with an unknown outcome. It was a read, so I didn't retry it. The other searches returned the same blocks.
+- I saved the conclusion as w-0001. It was written at level 1, scope finance, with status unverified, and the review passed.
+- I rated b-318 at 4, b-319 at 4 and b-207 at 5, and all three ratings were accepted.
+
+session_id: local-32080c205f2395aea94624542fe43bd21a11125e7b2ed3252a029c4db98e11d9

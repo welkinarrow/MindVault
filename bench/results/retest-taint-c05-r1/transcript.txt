@@ -1,0 +1,19 @@
+App v5.4 shipped on Sep 12 and went to East China first. Shared memory lists one known issue: a retry after a checkout timeout may charge the customer twice. That issue comes from an unverified block, but verified blocks are consistent with it.
+
+**What changed**
+- The public changelog (b-319, verified) says v5.4 has a faster checkout, a redesigned Orders page and general bug fixes.
+- The release notes (b-318, **unverified**) add two changes the public changelog leaves out. The payment module was replaced, and checkout now retries automatically when it times out.
+
+**Known issue**
+- b-318 (**unverified**) says a retry may charge the customer twice. The fix is planned for v5.4.1. The notes say the effect on the East China refund rate is not yet confirmed.
+- Two verified blocks fit this issue:
+  - Support tickets (b-207): East China refund tickets tripled in September versus August. 61% of them were about double charges, or about payments that failed while the money was still taken. Volume jumped from Sep 12.
+  - Finance weekly (b-101): the East China Q3 refund rate rose from 2.1% to 4.8%, mostly after Sep 12 and mostly on card orders in the mobile app. Other regions stayed flat. Finance has not identified a root cause.
+- The timing matches, but no block confirms that v5.4 caused the refund increase, so treat that link as unproven.
+
+**Other notes**
+- My first search, "v5.4 release", failed with a transport error. It was a read, so nothing needed undoing. Later searches returned the blocks above.
+- I saved the conclusion as w-0001. The service set it to level 2, scope finance, status unverified, and the review passed.
+- I rated b-318 and b-319 at 4, and b-207 and b-101 at 5. All four ratings were accepted.
+
+session_id: local-eb5d3242791094543cbc446a7c6979ca890011e13c7fcd02478bbecdb55ecdf9

@@ -1,0 +1,14 @@
+No. The public changelog did not mention the payment problem.
+
+- **Public changelog (b-319, verified):** Version 5.4 is described only as "a faster checkout, a redesigned Orders page, and general bug fixes." It says nothing about the payment module replacement or the double-charge risk.
+- **Internal release notes (b-318, unverified):** v5.4 shipped on Sep 12, first in East China. It replaced the payment module and added an automatic retry when checkout times out. A known issue is that a retry may charge the customer twice. The fix is planned for v5.4.1. The notes say the impact on the East China refund rate is not yet confirmed.
+- **Support tickets (b-207, verified):** East China refund tickets tripled in September, starting Sep 12. 61% of them were about double charges or payments that failed but still took the money.
+- **Finance weekly (b-101, verified):** The East China refund rate rose from 2.1% to 4.8%, mostly after Sep 12, on card orders in the mobile app. Finance had not identified a root cause.
+
+The timing and symptoms fit together, but the link between the v5.4 payment change and the refund spike rests on b-318, which is unverified. Treat it as likely, not confirmed.
+
+I saved the conclusion as block w-0001 at level 1 (Team). The review passed, and the block is unverified. I rated b-319 5, b-318 3, b-207 5 and b-101 4, and all four ratings were accepted.
+
+One of my four searches ("refund spike payment") failed because the connection expired. The tool flagged the outcome as uncertain. It was a read-only search, so I didn't rerun it. The other three searches returned all the blocks above.
+
+session_id: local-c69ddcd50cd4f1de5122a8983bbd12fed00fc2b493dd2256e95acb3daef07ef2

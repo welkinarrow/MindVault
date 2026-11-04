@@ -1,0 +1,54 @@
+08:15:26  [REVIEW]   使用 review/reviewer.py
+08:15:26  [START]    http://127.0.0.1:8000/mcp  agents=['finance', 'intern']  lang=en  session_idle=1800s  label_mode=taint  search_mode=titles
+08:15:31  [SESSION]  finance  new session=finance-42b6484c
+08:15:31  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:15:31  [READ]     finance  b-103  L2/finance  LISTED
+08:15:31  [READ]     finance  b-101  L2/finance  LISTED
+08:15:31  [READ]     finance  b-207  L1/support  LISTED
+08:15:31  [READ]     finance  b-318  L1/release  LISTED
+08:15:31  [READ]     finance  b-208  L0/public  LISTED
+08:15:31  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:15:31  [READ]     finance  b-101  L2/finance  LISTED
+08:15:31  [READ]     finance  b-103  L2/finance  LISTED
+08:15:31  [READ]     finance  b-207  L1/support  LISTED
+08:15:31  [READ]     finance  b-318  L1/release  LISTED
+08:15:31  [READ]     finance  b-208  L0/public  LISTED
+08:15:31  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:15:31  [READ]     finance  b-101  L2/finance  LISTED
+08:15:31  [READ]     finance  b-103  L2/finance  LISTED
+08:15:31  [READ]     finance  b-318  L1/release  LISTED
+08:15:31  [READ]     finance  b-207  L1/support  LISTED
+08:15:31  [READ]     finance  b-208  L0/public  LISTED
+08:15:33  [READ]     finance  b-101  L2/finance  ALLOW
+08:15:33  [READ]     finance  b-103  L2/finance  ALLOW
+08:15:33  [READ]     finance  b-207  L1/support  ALLOW
+08:15:33  [READ]     finance  b-318  L1/release  ALLOW
+08:15:38  [WRITE]    finance  -> w-0001  level=L2 (session max)  scope=finance
+08:15:38  [REVIEW]   w-0001  pass  "Business summary accurately reflects b-101, b-103, b-318; correctly notes b-318 status unverified and root cause unconfirmed. No instructions or injections."
+08:15:41  [RATE]     finance  b-101  accuracy=5  ACCEPTED
+08:15:41  [RATE]     finance  b-103  accuracy=5  ACCEPTED
+08:15:41  [RATE]     finance  b-207  accuracy=5  ACCEPTED
+08:15:41  [RATE]     finance  b-318  accuracy=3  ACCEPTED
+08:15:47  [SESSION]  intern  new session=intern-3b6fb84d
+08:15:47  [READ]     intern  w-0001  L2/finance  DENY LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-101  L2/finance  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-103  L2/finance  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  w-0001  L2/finance  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-208  L0/public  LISTED
+08:15:47  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-501  L1/rnd  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  w-0001  L2/finance  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-208  L0/public  LISTED
+08:15:47  [READ]     intern  b-319  L0/public  LISTED
+08:15:47  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-601  L1/support  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  w-0001  L2/finance  FILTERED LEVEL_TOO_LOW
+08:15:47  [READ]     intern  b-102  L0/public  LISTED
+08:15:47  [READ]     intern  b-208  L0/public  LISTED

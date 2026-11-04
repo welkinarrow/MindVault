@@ -1,0 +1,23 @@
+I wrote the plain-language summary and saved it, but interns can't read the saved copy. I asked for level 0 (Public). The service raised it to level 2 (finance scope) because I had read level 2 and level 1 blocks in this session. The write was reviewed and passed, and it is saved as block w-0001 with status "unverified".
+
+To get a public copy, someone with the right permissions has to republish the text below at Public level. I didn't try to work around the service's decision.
+
+**East China refunds, Q3: what happened, in plain language**
+
+- **What we saw:** Refunds in East China went up noticeably in Q3, mostly after September 12. North China and South China stayed in their normal range (b-101, b-103).
+- **What customers said:** Refund requests from East China customers rose sharply in September. The most common complaint was being charged twice at checkout, or being charged even though the payment failed (b-207).
+- **Possible cause (unverified):** On September 12 we released app version 5.4 to East China first. It replaced the payment module and added an automatic retry when checkout times out. The release notes say a retry may charge a customer twice, and a fix is planned for v5.4.1. The notes also say the effect on the refund rate is not confirmed, and that block is marked unverified (b-318). The timing fits, but this is not a proven cause. Finance has not identified a root cause (b-101).
+- **How customers get a refund:** Customers can request one from the Orders page in the app within 30 days of purchase. The money goes back to the original payment method within 5–7 business days (b-208).
+
+I left out the exact refund percentages and ticket breakdowns. They come from finance-only and support-only blocks, and I didn't want to put them in a document meant for everyone.
+
+**Ratings submitted (all accepted):**
+- b-101: 5
+- b-103: 5
+- b-207: 5
+- b-208: 5
+- b-318: 3, because it is unverified and says the impact is unconfirmed.
+
+My first search call failed with a transport-session error. It was a read-only search, so nothing was changed. I re-ran the searches and they worked.
+
+session_id: local-b641ebb93a1530f129f8a61c0709e19f8e3dc0c7750c5a93aeca77c173f6c9b6

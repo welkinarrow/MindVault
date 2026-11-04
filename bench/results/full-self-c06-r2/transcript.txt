@@ -1,0 +1,8 @@
+A customer requests a refund from the Orders page in the app, within 30 days of purchase. The refund goes back to the original payment method within 5-7 business days. This comes from b-208, the public FAQ, which is verified.
+
+- **Search error:** My first search ("refund") returned a transport error and an unknown outcome. It was a read, so I didn't retry it. Three other searches ("refund request customer", "refund policy", "payment") succeeded.
+- **Other blocks read:** b-207, b-101, b-318 and b-103 are about East China refund volume and a possible double-charge bug, not the request process, so I didn't cite them. b-318 is unverified.
+- **Saved conclusion:** I wrote it as w-0001 at level 0 (Public), because it restates a public FAQ. The review passed it. The service set its status to "unverified", which is its default for new writes.
+- **Rating:** I rated b-208 5/5 for accuracy, and the service accepted it.
+
+session_id: local-8eb0c3359f75b1ed29f403782c660249598bae810a143e7c26b3b3ffc828beaf

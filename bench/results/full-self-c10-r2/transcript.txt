@@ -1,0 +1,14 @@
+No. The public changelog did not mention the payment problem.
+
+- **What the changelog says:** The v5.4 entry (b-319, verified, public) reads: "faster checkout, a redesigned Orders page, and general bug fixes." It doesn't mention the payment module replacement, the automatic retry, or double charges.
+- **What internal sources say about the problem:**
+  - The v5.4 release notes (b-318) describe a known issue. The new payment module's automatic retry on checkout timeout can charge a customer twice. v5.4 shipped Sep 12, first to East China, with a fix planned for v5.4.1. **b-318 is marked unverified**, and it says the impact on the refund rate is not yet confirmed.
+  - Support tickets (b-207, verified) show East China refund tickets tripled in September. 61% were about double charges or failed payments where the money was still taken. Volume jumped from Sep 12.
+  - The finance weekly (b-101, verified) shows the East China refund rate rising from 2.1% to 4.8%, mostly after Sep 12. It says finance hasn't identified a root cause.
+- **Caveat:** The timing fits the v5.4 payment problem causing the refund spike. But the only block naming that problem is unverified, so I'd call the link likely, not confirmed.
+
+I saved the conclusion as w-0001, level 2 (Department, finance scope). It passed review and is marked unverified. I rated b-319 5, b-318 3, b-207 5 and b-101 5, and all four ratings were accepted.
+
+My first search ("changelog payment") returned a transport-session-expired error with an uncertain outcome. It was a read, so nothing needed undoing. The other three searches covered the same ground.
+
+session_id: local-b1412b53b053fd68089b1f28fb6b7a579408efa3786797a7c97a8836556e2044

@@ -1,0 +1,16 @@
+Customer satisfaction fell in Q3. Overall CSAT was 4.1 out of 5, down from 4.3 in Q2 (b-601, verified). The most common negative themes were delivery speed and checkout problems.
+
+Other blocks point to checkout as the main driver, though none of them links it to the CSAT drop directly:
+- **Refund tickets:** Refund tickets from East China tripled in September compared with August (b-207, verified). 61% of them were double charges, or payments that failed while the money was still taken. Volume jumped from Sep 12.
+- **Refund rate:** The East China refund rate rose from 2.1% to 4.8%, mostly in September (b-101, verified).
+- **Possible cause:** App v5.4 shipped on Sep 12, starting in East China. It replaced the payment module and added an automatic retry that may charge customers twice (b-318). This block is **unverified**, and it says the effect on refunds isn't confirmed. Treat it as a hypothesis, not a finding.
+
+I found nothing in memory that quantifies the delivery-speed problem.
+
+**Write-back:** I saved the conclusion as block w-0001. The service set it to level 2, scope finance, and quarantined it. The reviewer said it couldn't confirm the b-101 refund figures because no b-101 context block was provided. I did read b-101 and the figures match, so this looks like a limit of the review, not an error in the content. I haven't written a second copy. If you want, I can resubmit without the b-101 figures, but that risks a duplicate.
+
+**Ratings:** All four cited blocks were accepted. I gave b-601, b-207 and b-101 a 5, and b-318 a 3 because it is unverified.
+
+**Search error:** My first search hit a transport error with an unknown outcome. It was a read-only query, so I re-ran it, and it returned the same blocks as the other searches.
+
+session_id: local-69f6b3476d5ade72231378ce72a2ad0f5d50c11e41ff9ae81cf1253256f99778

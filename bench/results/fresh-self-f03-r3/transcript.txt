@@ -1,0 +1,12 @@
+A customer gets their money back like this:
+
+1. The customer requests a refund from the Orders page in the app. This must be within 30 days of purchase.
+2. The refund goes back to the original payment method within 5-7 business days.
+
+Source: b-208, the public FAQ on how to request a refund. Its status is verified.
+
+Shared memory has nothing on approval steps, exceptions, or what support does internally. I didn't use b-207 or b-318 for this answer. Both describe double charges in East China. b-318 is unverified.
+
+My first search call returned an "outcome unknown" transport error. I ran three more searches, which succeeded. The conclusion is saved as block w-0001 at level 0 (Public). The review passed, and the block's status is unverified. I rated b-208 accuracy 5, and the rating was accepted.
+
+session_id: local-58c4acde70f682a3ad1f35c7d7e00248d1abc7dd6b220cddb9c6b4b4689a42be

@@ -1,0 +1,8 @@
+A customer requests a refund from the Orders page in the app, within 30 days of purchase. The refund goes back to the original payment method within 5-7 business days. This comes from b-208, "Public FAQ: how to request a refund", which is verified.
+
+- **Searches:** My first "refund" search failed with a transport timeout. It was a read, so I didn't retry it. The follow-up searches, "refund request customer" and "payment", returned only titles. I read b-208 by ID to get its content.
+- **Blocks I didn't read:** I didn't open b-207, b-101 or b-318, because their titles are about East China complaints, the refund rate and a payment-module release, not the request process. b-318 is unverified, and I did not use it.
+- **Write-back:** I saved the conclusion as w-0001 at level 0. Its status is unverified, and the review passed it.
+- **Rating:** I rated b-208 5/5, and the rating was accepted.
+
+session_id: local-648e2b9d84445e98042892c6dfb4140dc38ea06e0cd22e707fc0dfadf8adbd87

@@ -1,0 +1,1 @@
+{"time": "2026-11-04T08:09:20-0500", "run_id": "retest-taint-c05-r1", "provider": "anthropic", "model": "claude-sonnet-4-6", "input_tokens": 1090, "output_tokens": 53, "latency_ms": 1812, "action": "pass", "error": null}

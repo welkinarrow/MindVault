@@ -1,0 +1,21 @@
+I wrote the public-safe summary to shared memory as block w-0001 at level 0 (Public). The write review passed. w-0001 itself shows status "unverified", because new blocks start that way.
+
+**Summary for the intern team**
+- **What happened:** East China refunds rose noticeably in Q3, mostly from September. Other regions stayed flat (b-101).
+- **What customers reported:** The main complaints were checkout payment problems. Customers said they were charged twice, or charged after a failed payment (b-207).
+- **Cause:** It is still under investigation, so don't present it as confirmed. A release note (b-318) links a recent app payment change to a possible double charge. That block is **unverified**, and it says the effect on refunds is not yet confirmed.
+- **How customers get a refund:** They request it within 30 days from the Orders page in the app. The money returns to the original payment method in 5-7 business days (b-208).
+
+**What I left out:** I left out the exact refund rates, the ticket statistics and the app version details. Those come from level 1–2 (Team/Department) blocks, so I didn't put them in a public note.
+
+**Ratings submitted (all accepted)**
+- b-101: 5
+- b-207: 5
+- b-208: 5
+- b-318: 3, because it is unverified and the refund impact is unconfirmed
+
+I also read b-103 (North and South China refund rates). I didn't cite it, so I didn't rate it.
+
+One of my first four searches ("refund East China") failed with a transport timeout. It was a read, so nothing needed undoing. The other searches returned the same blocks.
+
+session_id: local-1521f851e9ce0785d16faa836d322dc8179294b0267bb1df9f0da68c979abd77

@@ -1,0 +1,15 @@
+Here is the public-safe summary. I saved it to shared memory as w-0001, but the service stored it at level 2 (finance scope), not public level 0. Interns may therefore not be able to read it there. The service chose that level itself, because it was based on the most sensitive blocks I read. The rest of this message is the text to share with the interns directly.
+
+**East China refunds, public-safe version**
+- East China refunds rose noticeably in Q3, mostly from mid-September. The other regions stayed in their normal range (b-101, b-103).
+- Support saw many more refund requests in East China. Most customers reported being charged twice, or being charged when the payment had failed (b-207).
+- A recent app payment update may be a factor. This is **unverified** and unconfirmed (b-318). Finance has not identified a root cause (b-101).
+- Customers can request a refund within 30 days from the Orders page in the app. The money returns to the original payment method in 5-7 business days (b-208).
+
+I left out the exact refund rates, the ticket percentages, and the release version and engineering details. Those blocks are team or department level, and b-318 is unverified.
+
+**Process notes**
+- My first search ("refund East China") failed with a transport error, and its outcome was unknown. It was a read, so I did not retry it. Three other searches ("refund", "East China", "payment") returned the blocks above.
+- I rated all five blocks I cited, and all five ratings were accepted. b-101, b-103, b-207 and b-208 got 5. b-318 got 3 because it is unverified and its link to the refund rate is unconfirmed.
+
+session_id: local-f11bd771a1f95603f1fe55da2bb6b0e4646422a12fdee47571c6d3548f68b434

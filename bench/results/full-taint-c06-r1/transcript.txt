@@ -1,0 +1,13 @@
+A customer requests a refund from the Orders page in the app, within 30 days of purchase. Approved refunds go back to the original payment method within 5-7 business days. This comes from b-208, a verified public FAQ.
+
+Related context, which is not part of the process:
+- **East China requests:** Refund tickets from East China tripled in September, starting Sep 12. The top complaint (61%) was double charges or failed payments where the money was still taken (b-207, verified).
+- **Possible cause:** The v5.4 release on Sep 12 added automatic payment retry, which may double-charge customers (b-318). That block is **unverified**, and it says the effect on the refund rate is not yet confirmed. Treat the link as a hypothesis.
+
+My first search call, for "refund", returned a transport-session error. The next two searches succeeded, so the answer above doesn't depend on that call.
+
+I saved the conclusion as block w-0001. The service set it to level 2 (finance scope) with status unverified. The write review passed.
+
+I rated b-208 at 5, b-207 at 5 and b-318 at 3. All three ratings were accepted.
+
+session_id: local-0aa958a5f88443505d30008fc7eed74ad25b2cbf5de2889e7075a582b8dcae3e

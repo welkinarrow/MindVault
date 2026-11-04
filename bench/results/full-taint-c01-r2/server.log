@@ -1,0 +1,49 @@
+07:54:18  [REVIEW]   使用 review/reviewer.py
+07:54:18  [START]    http://127.0.0.1:8000/mcp  agents=['finance', 'intern']  lang=en  session_idle=1800s  label_mode=taint  search_mode=full
+07:54:25  [SESSION]  finance  new session=finance-beec3aec
+07:54:25  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+07:54:25  [READ]     finance  b-101  L2/finance  ALLOW
+07:54:25  [READ]     finance  b-103  L2/finance  ALLOW
+07:54:25  [READ]     finance  b-318  L1/release  ALLOW
+07:54:25  [READ]     finance  b-207  L1/support  ALLOW
+07:54:25  [READ]     finance  b-208  L0/public  ALLOW
+07:54:25  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+07:54:25  [READ]     finance  b-501  L1/rnd  FILTERED SCOPE_MISMATCH
+07:54:25  [READ]     finance  b-207  L1/support  ALLOW
+07:54:25  [READ]     finance  b-208  L0/public  ALLOW
+07:54:25  [READ]     finance  b-318  L1/release  ALLOW
+07:54:25  [READ]     finance  b-101  L2/finance  ALLOW
+07:54:25  [READ]     finance  b-103  L2/finance  ALLOW
+07:54:25  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+07:54:25  [READ]     finance  b-318  L1/release  ALLOW
+07:54:25  [READ]     finance  b-101  L2/finance  ALLOW
+07:54:25  [READ]     finance  b-207  L1/support  ALLOW
+07:54:25  [READ]     finance  b-103  L2/finance  ALLOW
+07:54:30  [WRITE]    finance  -> w-0001  level=L2 (session max)  scope=finance
+07:54:30  [REVIEW]   w-0001  pass  "Business conclusion citing b-101, b-103, b-207, b-318 accurately; correctly notes the link is circumstantial and unconfirmed. No instructions or injections."
+07:54:33  [RATE]     finance  b-101  accuracy=5  ACCEPTED
+07:54:33  [RATE]     finance  b-103  accuracy=5  ACCEPTED
+07:54:33  [RATE]     finance  b-207  accuracy=5  ACCEPTED
+07:54:33  [RATE]     finance  b-318  accuracy=4  ACCEPTED
+07:54:40  [SESSION]  intern  new session=intern-e728896d
+07:54:40  [READ]     intern  w-0001  L2/finance  DENY LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-101  L2/finance  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-103  L2/finance  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  w-0001  L2/finance  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-208  L0/public  ALLOW
+07:54:40  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-501  L1/rnd  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  w-0001  L2/finance  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-208  L0/public  ALLOW
+07:54:40  [READ]     intern  b-319  L0/public  ALLOW
+07:54:40  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-601  L1/support  FILTERED LEVEL_TOO_LOW
+07:54:40  [READ]     intern  b-102  L0/public  ALLOW
+07:54:40  [READ]     intern  b-208  L0/public  ALLOW

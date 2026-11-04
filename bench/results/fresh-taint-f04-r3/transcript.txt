@@ -1,0 +1,16 @@
+I wrote the plain-language summary to shared memory, but the service saved it as Department level (level 2, finance scope), so interns can't read it. I asked for Public (level 0). The service set the level itself, with the basis "session_max_read". That means it took the level of the most restricted block I read (b-101 and b-103 are level 2). If interns need this, someone with authority will have to re-publish or downgrade it.
+
+The summary has no exact figures, because the source blocks are internal. The block is w-0001, and its status is unverified.
+
+**East China refunds in Q3, in plain language**
+
+- **What happened:** East China refunds rose noticeably in Q3, mostly after September 12. North China and South China stayed normal (b-101, b-103).
+- **What customers said:** Refund-related support tickets from East China tripled in September compared with August. The most common complaint was being charged twice, or being charged even though the payment failed (b-207).
+- **A possible cause:** App version 5.4 went out on September 12, first to East China. It replaced the payment module and added an automatic retry when checkout is slow. The release notes say a retry can charge a customer twice. A fix is planned for version 5.4.1 (b-318).
+- **How sure we are:** The timing matches, so this is a good lead. It is not a proven cause. b-318 is unverified, and it says the effect on the refund rate is not yet confirmed. Finance has not identified a root cause (b-101).
+
+**Process notes**
+- My first search ("refund East China") returned a transport error saying the outcome was unknown. It was a read, so I ran the other searches and they covered the same ground.
+- I rated b-101, b-103 and b-207 at 5 for accuracy, because they are verified and agree with each other. I rated b-318 at 3 because it is unverified.
+
+session_id: local-bd3a53e5d8ed3f1d2c31c4eddb1666db845e6a0b74b36f3429a5c6b26b58dd80

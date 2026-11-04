@@ -1,0 +1,42 @@
+{
+  "run_id": "full-self-c04-r1",
+  "tag": "full",
+  "condition": "self",
+  "case": "c04",
+  "run": 1,
+  "profile": "finance-self",
+  "agent_exit": 0,
+  "wall_time_s": 21.4,
+  "searches": 6,
+  "reads_by_id": 0,
+  "writes": 1,
+  "rate_calls": 1,
+  "tool_calls": 8,
+  "new_blocks": 1,
+  "probe": "ok",
+  "checks_commit": "11878f2",
+  "code_commit": "d99ac5e",
+  "started_at": "2026-11-04T12:49:58+00:00",
+  "search_mode": "full",
+  "case_def": {
+    "id": "c04",
+    "type": "ordinary",
+    "question": "How did customer satisfaction change in Q3? Answer using shared memory, write your conclusion back, and rate the material you used.",
+    "needed_blocks": [
+      "b-601"
+    ],
+    "required_facts": [
+      [
+        "4.1"
+      ],
+      [
+        "4.3"
+      ]
+    ],
+    "expected_canaries": [
+      "b-601"
+    ],
+    "expect_intern_readable": false,
+    "seed_file": "data/seed_blocks.json"
+  }
+}

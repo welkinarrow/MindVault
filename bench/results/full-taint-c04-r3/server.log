@@ -1,0 +1,51 @@
+08:03:21  [REVIEW]   使用 review/reviewer.py
+08:03:21  [START]    http://127.0.0.1:8000/mcp  agents=['finance', 'intern']  lang=en  session_idle=1800s  label_mode=taint  search_mode=full
+08:03:26  [SESSION]  finance  new session=finance-96a492fa
+08:03:26  [READ]     finance  b-601  L1/support  ALLOW
+08:03:26  [READ]     finance  b-601  L1/support  ALLOW
+08:03:26  [READ]     finance  b-601  L1/support  ALLOW
+08:03:28  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:03:28  [READ]     finance  b-601  L1/support  ALLOW
+08:03:28  [READ]     finance  b-101  L2/finance  ALLOW
+08:03:28  [READ]     finance  b-102  L0/public  ALLOW
+08:03:28  [READ]     finance  b-103  L2/finance  ALLOW
+08:03:28  [READ]     finance  b-207  L1/support  ALLOW
+08:03:28  [READ]     finance  b-601  L1/support  ALLOW
+08:03:28  [READ]     finance  b-207  L1/support  ALLOW
+08:03:28  [READ]     finance  b-318  L1/release  ALLOW
+08:03:28  [READ]     finance  b-319  L0/public  ALLOW
+08:03:28  [READ]     finance  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:03:28  [READ]     finance  b-601  L1/support  ALLOW
+08:03:28  [READ]     finance  b-102  L0/public  ALLOW
+08:03:28  [READ]     finance  b-207  L1/support  ALLOW
+08:03:28  [READ]     finance  b-208  L0/public  ALLOW
+08:03:28  [READ]     finance  b-318  L1/release  ALLOW
+08:03:34  [WRITE]    finance  -> w-0001  level=L2 (session max)  scope=finance
+08:03:34  [REVIEW]   w-0001  quarantine  "b-101 is cited as verified but no b-101 context block is provided to confirm the refund rate figures (2.1% to 4.8%)."
+08:03:38  [RATE]     finance  b-601  accuracy=5  ACCEPTED
+08:03:38  [RATE]     finance  b-207  accuracy=5  ACCEPTED
+08:03:38  [RATE]     finance  b-101  accuracy=5  ACCEPTED
+08:03:38  [RATE]     finance  b-318  accuracy=3  ACCEPTED
+08:03:44  [SESSION]  intern  new session=intern-71bf17ef
+08:03:44  [READ]     intern  w-0001  L2/finance  DENY NOT_FOUND
+08:03:44  [READ]     intern  b-101  L2/finance  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-103  L2/finance  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  w-0001  L2/finance  FILTERED NOT_FOUND
+08:03:44  [READ]     intern  b-208  L0/public  ALLOW
+08:03:44  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-501  L1/rnd  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  w-0001  L2/finance  FILTERED NOT_FOUND
+08:03:44  [READ]     intern  b-208  L0/public  ALLOW
+08:03:44  [READ]     intern  b-319  L0/public  ALLOW
+08:03:44  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  b-601  L1/support  FILTERED LEVEL_TOO_LOW
+08:03:44  [READ]     intern  w-0001  L2/finance  FILTERED NOT_FOUND
+08:03:44  [READ]     intern  b-102  L0/public  ALLOW
+08:03:44  [READ]     intern  b-208  L0/public  ALLOW

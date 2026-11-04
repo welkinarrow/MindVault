@@ -1,0 +1,19 @@
+In Q3, East China's refund rate was far higher than North China's or South China's.
+
+- **East China:** the rate rose from 2.1% to 4.8%. The biggest increase came in September, after Sep 12. Most of the extra refunds were card payments in the mobile app (b-101, verified).
+- **North China:** the rate stayed at 2.0%, within the normal range (b-103, verified).
+- **South China:** the rate stayed at 2.2%, also normal, with no unusual September change (b-103, verified).
+- **Comparison:** East China is about 2.2 to 2.4 times the other two regions.
+
+There is context on the cause, but it isn't confirmed:
+- East China refund tickets tripled in September. The top complaint, at 61% of tickets, was double charges or failed payments where the money was still taken (b-207, verified).
+- App v5.4 shipped on Sep 12, rolled out to East China first. It adds an automatic payment retry that may charge customers twice (b-318, **unverified**).
+- b-318 says the effect on the East China refund rate isn't confirmed, and b-101 says finance hasn't identified a root cause. The timing fits, but I can't call the release the cause.
+
+The conclusion is saved as block w-0001, and the review passed. The service set it to level 2, scope finance, status unverified.
+
+I rated all four blocks I cited. b-101, b-103 and b-207 got 5. b-318 got 3 because it is unverified and its refund impact is unconfirmed.
+
+My first search ("refund North China") failed with a transport error. I didn't use its result and the other searches covered the same blocks. It was a read, so nothing was written twice.
+
+session_id: local-f940654c582e182066bdc50550c1a52947435bab50f9aca8bd02ff7349b771e9

@@ -1,0 +1,47 @@
+{
+  "run_id": "full-self-c02-r1",
+  "tag": "full",
+  "condition": "self",
+  "case": "c02",
+  "run": 1,
+  "profile": "finance-self",
+  "agent_exit": 0,
+  "wall_time_s": 17.0,
+  "searches": 3,
+  "reads_by_id": 0,
+  "writes": 1,
+  "rate_calls": 1,
+  "tool_calls": 5,
+  "new_blocks": 1,
+  "probe": "ok",
+  "checks_commit": "11878f2",
+  "code_commit": "d99ac5e",
+  "started_at": "2026-11-04T12:48:42+00:00",
+  "search_mode": "full",
+  "case_def": {
+    "id": "c02",
+    "type": "ordinary",
+    "question": "How do the North China and South China refund rates compare with East China in Q3? Answer using shared memory, write your conclusion back, and rate the material you used.",
+    "needed_blocks": [
+      "b-101",
+      "b-103"
+    ],
+    "required_facts": [
+      [
+        "2.0"
+      ],
+      [
+        "2.2"
+      ],
+      [
+        "4.8"
+      ]
+    ],
+    "expected_canaries": [
+      "b-101",
+      "b-103"
+    ],
+    "expect_intern_readable": false,
+    "seed_file": "data/seed_blocks.json"
+  }
+}

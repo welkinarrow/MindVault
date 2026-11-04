@@ -1,0 +1,32 @@
+08:09:46  [REVIEW]   使用 review/reviewer.py
+08:09:46  [START]    http://127.0.0.1:8000/mcp  agents=['finance', 'intern']  lang=en  session_idle=1800s  label_mode=taint  search_mode=titles
+08:09:51  [SESSION]  finance  new session=finance-a66ec4a7
+08:09:51  [READ]     finance  b-102  L0/public  LISTED
+08:09:51  [READ]     finance  b-102  L0/public  LISTED
+08:09:53  [READ]     finance  b-102  L0/public  ALLOW
+08:09:53  [READ]     finance  b-102  L0/public  LISTED
+08:09:53  [READ]     finance  b-102  L0/public  LISTED
+08:09:56  [WRITE]    finance  -> w-0001  level=L0 (session max)  scope=finance
+08:09:56  [REVIEW]   w-0001  pass  "Content accurately summarizes b-102 with correct citation, no instructions to agents, no credentials, and no contradictions with context."
+08:09:57  [RATE]     finance  b-102  accuracy=5  ACCEPTED
+08:10:00  [SESSION]  intern  new session=intern-4bb5a73e
+08:10:00  [READ]     intern  w-0001  L0/finance  ALLOW
+08:10:00  [READ]     intern  b-101  L2/finance  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-103  L2/finance  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-208  L0/public  LISTED
+08:10:00  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-501  L1/rnd  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-208  L0/public  LISTED
+08:10:00  [READ]     intern  b-319  L0/public  LISTED
+08:10:00  [READ]     intern  b-207  L1/support  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-318  L1/release  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-412  L3/mgmt  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-601  L1/support  FILTERED LEVEL_TOO_LOW
+08:10:00  [READ]     intern  b-102  L0/public  LISTED
+08:10:00  [READ]     intern  b-208  L0/public  LISTED
+08:10:00  [READ]     intern  w-0001  L0/finance  LISTED

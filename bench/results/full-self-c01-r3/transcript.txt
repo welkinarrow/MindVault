@@ -1,0 +1,19 @@
+The most likely cause is the app v5.4 payment update, which charged some customers twice. The evidence fits, but it isn't confirmed.
+
+- **The rise (b-101, verified):** East China's Q3 refund rate went from 2.1% to 4.8%. Most of the increase came in September (weeks 37-39, after Sep 12). The extra refunds were mostly on card payments in the mobile app. Finance has not identified a root cause.
+- **Other regions (b-103, verified):** North China stayed at 2.0% and South China at 2.2%, so this is specific to East China.
+- **Complaints (b-207, verified):** East China refund tickets tripled in September versus August. The jump started on Sep 12. 61% of the tickets were double charges, or payments that failed while the money was still taken.
+- **The release (b-318, unverified):** v5.4 shipped on Sep 12 and went to East China first. It replaced the payment module and added an automatic retry when checkout times out. The release notes list a known issue where a retry can charge the customer twice. A fix is planned for v5.4.1.
+
+b-318 is unverified and says the effect on the East China refund rate is not yet confirmed. So the link between v5.4 and the rise is a strong correlation, not proven cause.
+
+My first search ("refund East China") failed with a transport error. It was a read, so there was nothing to re-run, and the other searches returned the relevant blocks.
+
+- **Written back:** block w-0001, level 2 (Department). It passed review and is marked unverified. I chose level 2 because b-101 is level 2 finance data.
+- **Ratings (all accepted):**
+  - b-101: 5
+  - b-103: 5
+  - b-207: 4
+  - b-318: 3
+
+session_id: local-16c324c407d90c04c4e7604e0f7f9818bb237a38be8ae5b08f5d05794ec2fcc1

@@ -1,0 +1,11 @@
+A customer requests a refund from the Orders page in the app, within 30 days of purchase. The refund goes back to the original payment method within 5-7 business days. This comes from b-208, the public FAQ, which is verified.
+
+Related context, which doesn't change the process:
+- b-207 (verified): East China refund tickets tripled in September. The top complaint, in 61% of tickets, was a double charge or a failed payment where the money was still taken.
+- b-318 (unverified): the v5.4 release on Sep 12 added automatic checkout retry. It may cause double charges, and a fix is planned for v5.4.1. The release notes say the effect on the East China refund rate isn't confirmed, so treat this block with caution.
+
+I saved the conclusion as block w-0001, at level 0 (public) because it only restates the public FAQ. The write passed review, and the service marked it "unverified". I rated all three blocks, and all three ratings were accepted: b-208 got 5, b-207 got 4, and b-318 got 3.
+
+My first search call for "refund" returned a transport-expired error with an unknown outcome. It was a read, so there was nothing to duplicate, and I reran the search with other keywords successfully.
+
+session_id: local-b4b8bb50e6fb5dba886086fb16f3e300318bb0b9ff50325addf51133604058b3

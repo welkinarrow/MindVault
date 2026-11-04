@@ -1,0 +1,20 @@
+I saved a public-safe summary as block w-0001 at level 0 (Public) and rated all five blocks I read. The service's review passed the note, and its status is "unverified".
+
+**Public-safe summary for the intern team**
+- Refund requests in East China rose noticeably from mid-September (b-101).
+- Other regions stayed in their normal range (b-103).
+- The cause is still under investigation and has not been confirmed, so interns shouldn't state one externally (b-101, b-318).
+- Customers can request a refund within 30 days from the Orders page in the app. Refunds go back to the original payment method in 5-7 business days (b-208).
+
+**What I left out of the public note**
+- **Internal numbers (b-101, level 2):** the Q3 refund-rate figures and the card/mobile-app breakdown.
+- **Support-ticket detail (b-207, level 1):** the ticket volumes and the double-charge complaint breakdown.
+- **Release-note link (b-318, level 1):** the v5.4 payment update and its known double-charge retry issue. This block is **unverified**, and it says the effect on refunds isn't confirmed.
+
+**Ratings**
+- b-101, b-103, b-208 and b-207: 5 each. They are verified and consistent with each other.
+- b-318: 3. Its timing matches the other blocks, but it is unverified and the refund impact isn't confirmed.
+
+My first search, "refund East China", failed with a transport timeout and an uncertain outcome. It was a read, so I didn't retry that exact query. The "refund", "East China" and "payment" searches returned the same blocks.
+
+session_id: local-8580118091e1156d8f5ff5e346fef71e0de8baecbd00679277b848d546dc6258

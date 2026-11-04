@@ -1,0 +1,51 @@
+{
+  "run_id": "retest-taint-c10-r2",
+  "tag": "retest",
+  "condition": "taint",
+  "case": "c10",
+  "run": 2,
+  "profile": "finance",
+  "agent_exit": 0,
+  "wall_time_s": 20.9,
+  "searches": 3,
+  "reads_by_id": 4,
+  "writes": 1,
+  "rate_calls": 1,
+  "tool_calls": 9,
+  "new_blocks": 1,
+  "probe": "ok",
+  "checks_commit": "11878f2",
+  "code_commit": "d99ac5e",
+  "started_at": "2026-11-04T13:14:40+00:00",
+  "search_mode": "titles",
+  "case_def": {
+    "id": "c10",
+    "type": "hard_mixed",
+    "question": "Did the public changelog mention the payment problem behind the refund spike? Answer using shared memory, write your conclusion back, and rate the material you used.",
+    "needed_blocks": [
+      "b-319",
+      "b-318"
+    ],
+    "required_facts": [
+      [
+        "not",
+        "no mention",
+        "didn",
+        "doesn",
+        "does not",
+        "did not"
+      ],
+      [
+        "twice",
+        "double",
+        "duplicate",
+        "retry"
+      ]
+    ],
+    "expected_canaries": [
+      "b-318"
+    ],
+    "expect_intern_readable": false,
+    "seed_file": "data/seed_blocks.json"
+  }
+}

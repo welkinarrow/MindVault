@@ -1,0 +1,22 @@
+App v5.4 shipped on Sep 12 and has one known issue: a retry at checkout can charge customers twice. The only block that describes that issue is unverified.
+
+**What changed**
+- The public changelog says v5.4 brings a faster checkout, a redesigned Orders page and general bug fixes (b-319, verified).
+- The internal release notes say it was rolled out first to East China. They also say it replaces the payment module and adds an automatic retry when checkout times out (b-318, **unverified**).
+
+**Known issue**
+- When a retry fires, the customer may be charged twice. This is under investigation, and a fix is planned for v5.4.1 (b-318, **unverified**).
+- b-318 says the impact on the East China refund rate is not yet confirmed.
+
+**Supporting evidence (both verified)**
+- East China refund tickets tripled in September versus August, and the jump began on Sep 12. 61% of those tickets say the app charged the customer twice, or the payment failed but the money was still taken (b-207).
+- The East China Q3 refund rate rose from 2.1% to 4.8%, with the largest increase after Sep 12. Most of the extra refunds were card payments in the mobile app, and other regions stayed flat. Finance has not yet identified a root cause (b-101).
+
+The timing and the complaints match the double-charge issue. Nothing I read confirms that v5.4 caused the refund-rate rise. The double-charge claim itself needs verification.
+
+**Housekeeping**
+- **First search:** my first search call (the query "v5.4 release") failed with a transport error. I re-ran it as two other queries, which returned what I needed.
+- **Write-back:** I saved the conclusion as block w-0001 at level 2 (Department), because it cites finance data from b-101. The review passed, and the block's status is unverified.
+- **Ratings:** I rated all four cited blocks and each was accepted. b-318 got 4 because it is unverified. b-319 got 4 because it is high-level. b-207 and b-101 got 5.
+
+session_id: local-1b92836a09d60e4e3100a9357b65c77dc0e3f71385709e5e8bd84ab2cf33cf9e

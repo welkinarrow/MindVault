@@ -1,0 +1,46 @@
+{
+  "run_id": "full-self-c05-r3",
+  "tag": "full",
+  "condition": "self",
+  "case": "c05",
+  "run": 3,
+  "profile": "finance-self",
+  "agent_exit": 0,
+  "wall_time_s": 17.0,
+  "searches": 2,
+  "reads_by_id": 0,
+  "writes": 1,
+  "rate_calls": 1,
+  "tool_calls": 4,
+  "new_blocks": 1,
+  "probe": "ok",
+  "checks_commit": "11878f2",
+  "code_commit": "d99ac5e",
+  "started_at": "2026-11-04T13:04:20+00:00",
+  "search_mode": "full",
+  "case_def": {
+    "id": "c05",
+    "type": "ordinary",
+    "question": "What changed in app v5.4, and are there any known issues? Answer using shared memory, write your conclusion back, and rate the material you used.",
+    "needed_blocks": [
+      "b-318",
+      "b-319"
+    ],
+    "required_facts": [
+      [
+        "payment module",
+        "retry"
+      ],
+      [
+        "twice",
+        "double",
+        "duplicate"
+      ]
+    ],
+    "expected_canaries": [
+      "b-318"
+    ],
+    "expect_intern_readable": false,
+    "seed_file": "data/seed_blocks.json"
+  }
+}

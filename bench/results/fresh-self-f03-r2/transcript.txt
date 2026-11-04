@@ -1,0 +1,9 @@
+A customer gets their money back by requesting a refund from the Orders page in the app. They must do this within 30 days of purchase. The refund goes back to the original payment method within 5-7 business days. This comes from block b-208, the public FAQ "how to request a refund", which is verified.
+
+- **Limits of the answer:** Shared memory has no internal handling steps, such as approvals or support escalation. b-208 is the only block that describes the process.
+- **Other blocks:** Some blocks cover why East China refunds rose in September (b-101, b-207, b-318). They are about refund volume and double-charge complaints, not the process, so I didn't use them. b-318 is marked unverified.
+- **Search error:** My first search (query "refund process") failed with a transport error. It was read-only, so I didn't retry it. Later searches returned the relevant blocks.
+- **Saved conclusion:** I wrote it as w-0001 at level 0 (Public), because it only restates the public FAQ. Review passed, and its status is unverified for now.
+- **Rating:** I rated b-208 5 out of 5 for accuracy, and the rating was accepted. It was the only block I cited.
+
+session_id: local-c357e0a378d5a6835638e1aedf0e354422560a65506c48a30f2f34944fbc1f8c

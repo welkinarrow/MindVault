@@ -1,0 +1,13 @@
+East China shoppers were most likely unhappy because they were charged twice, or charged for failed payments, at checkout after Sep 12. The link to the v5.4 release is a strong hypothesis, not a confirmed cause.
+
+- **Complaints:** Refund-related support tickets from East China tripled in September compared with August. 61% of them were about being charged twice, or about a failed payment where the money was still taken. Volume jumped from Sep 12 (b-207, verified).
+- **Refund rate:** The East China Q3 refund rate rose from 2.1% to 4.8%. The biggest increase was in September, after Sep 12, mostly on card orders in the mobile app. Finance had not identified a root cause (b-101, verified).
+- **Other regions:** North China stayed at 2.0% and South China at 2.2%, so the problem was specific to East China (b-103, verified).
+- **Likely trigger:** App v5.4 shipped on Sep 12, first to East China. It replaced the payment module and added an automatic retry when checkout times out. A known issue is that a retry can charge the customer twice (b-318).
+- **Caveat on b-318:** Its status is unverified, and it says the effect on the East China refund rate is not yet confirmed. The timing and the complaint pattern fit, but a fix in v5.4.1 and a check of refund data would be needed to confirm it.
+
+I saved the conclusion as block w-0001 (level 2, scope finance, status unverified). It passed review. I rated b-101 5, b-207 5, b-103 5 and b-318 4, and all four ratings were accepted.
+
+My first search, "East China September", failed with a transport timeout. It was a read, so nothing needed undoing. The other searches and block reads worked.
+
+session_id: local-de9383dc3335c2235ea024f47ed7752116f18dc494e21c1cba178f8efb1b8b87

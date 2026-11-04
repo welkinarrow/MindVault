@@ -1,0 +1,15 @@
+The most likely driver is the v5.4 payment module release on Sep 12. It is a strong correlation, not a confirmed root cause.
+
+- **What happened (b-101, verified):** East China's Q3 refund rate rose from 2.1% to 4.8%. Most of the increase came after Sep 12 (weeks 37-39) and was on card orders in the mobile app. Finance has not identified a root cause.
+- **Other regions (b-103, verified):** North China stayed at 2.0% and South China at 2.2%, so the jump is specific to East China.
+- **Customer complaints (b-207, verified):** Refund tickets from East China tripled in September compared with August, starting Sep 12. 61% of them were double charges, or failed payments where the money was still taken.
+- **Release (b-318, unverified):** App v5.4 shipped Sep 12 and went to East China first. It replaced the payment module and added automatic retry on checkout timeout. It has a known issue where a retry can charge the customer twice. A fix is planned for v5.4.1.
+
+The timing, the card and mobile-app pattern, and the double-charge complaints all fit the v5.4 retry bug. The only block that names v5.4 as a cause is b-318, which is unverified. It also says the effect on the East China refund rate is not yet confirmed. To confirm the cause, someone would need to match refunded orders to retried checkouts in v5.4.
+
+My first search call returned a transport-expiry error with an uncertain outcome. It was a read, so I re-ran the search with different keywords and it worked.
+
+- **Written to memory:** The conclusion is saved as w-0001. The service set it to level 2, scope finance, status unverified, and the review passed it.
+- **Ratings submitted:** b-101: 5, b-103: 5, b-207: 5, b-318: 3. All four were accepted. I gave b-318 a 3 because it is unverified and says the impact is unconfirmed.
+
+session_id: local-e4bc66241817784bd1ccc189009d0317d2d7fe3c9a61900ab8aca382ce8827db

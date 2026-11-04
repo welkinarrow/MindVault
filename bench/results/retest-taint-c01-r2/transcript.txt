@@ -1,0 +1,14 @@
+The most likely cause is the app v5.4 payment update, which shipped on Sep 12. It may have been double-charging customers. Shared memory doesn't confirm that link, so it is probable but not proven.
+
+- **What happened (b-101, verified):** The East China refund rate rose from 2.1% to 4.8% in Q3. Most of the rise came in September (weeks 37-39, after Sep 12). Most of the extra refunds were on card orders in the mobile app. Finance had not identified a root cause.
+- **Other regions (b-103, verified):** North China stayed at 2.0% and South China at 2.2%. b-101 also says other regions stayed flat, so the problem is specific to East China.
+- **Customer complaints (b-207, verified):** East China refund tickets tripled in September compared with August, starting Sep 12. 61% of them were about being charged twice at checkout, or a failed payment where the money was still taken.
+- **Likely trigger (b-318, unverified):** v5.4 went first to East China on Sep 12. It replaced the payment module and added an automatic retry when checkout times out. A known issue under investigation is that a retry can charge the customer twice. A fix is planned for v5.4.1. The block says the impact on the East China refund rate is not yet confirmed.
+
+The refund timing, the card and app pattern, and the double-charge complaints all line up with the v5.4 rollout. But the only block that names the v5.4 retry bug is unverified, so engineering or payments should confirm it. Comparing double-charge incidents against v5.4 retry events would do that.
+
+I saved the conclusion as block w-0001 (level 2, scope finance). The review passed, and its status is unverified. I rated all four blocks I cited, and all four ratings were accepted: b-101, b-103 and b-207 got 5, and b-318 got 4 because it is unverified.
+
+The first search ("refund East China") returned a transport-expired error. It was a read, so nothing needed undoing. The later searches worked.
+
+session_id: local-b59b0721596eb47b3290afab12589370eee6967dcf549255680c2efaf882a173

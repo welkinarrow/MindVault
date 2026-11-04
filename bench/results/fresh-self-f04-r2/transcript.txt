@@ -1,0 +1,22 @@
+I wrote a public version of the East China refund findings and saved it to shared memory as block w-0002, at level 0 (Public). Review passed it, and its status is "unverified", which is what the service assigns to new writes.
+
+The public text says:
+
+- **Rate:** East China's refund rate rose noticeably in Q3, mostly from mid-September. North China and South China stayed in their normal range (b-101, b-103).
+- **Complaints:** Support saw many more East China refund requests in September. The most common complaint was being charged twice, or being charged after a failed payment (b-207).
+- **Cause:** It has not been confirmed and is still being investigated.
+- **How to get a refund:** Customers can request one within 30 days from the Orders page. It goes back to the original payment method in 5-7 business days (b-208).
+
+I left out three things on purpose:
+
+- **Exact percentages:** The 2.1% to 4.8% figures come from b-101, a Department-level finance block, so I described the change in words only.
+- **Internal support detail:** I didn't include the ticket counts and percentages from b-207, which is a Team-level block.
+- **The app-update link:** b-318 says the v5.4 payment update (Sep 12) may be charging customers twice on retry. That block is "unverified" and the impact on refunds is unconfirmed, so I kept it out.
+
+My first draft mentioned a possible link to the payment update. The review quarantined it (w-0001) because b-318 couldn't be validated, so I rewrote the summary without that claim. w-0001 is still in the system as a quarantined block.
+
+My first search, "refund East China", returned a transport-session-expired error with an unknown outcome. It was a read, so I ran the searches again ("refund" and "East China") and got full results.
+
+I rated b-101, b-103, b-207 and b-208 at 5 for accuracy, and all four ratings were accepted. I didn't rate b-318 because I didn't cite it in the saved summary.
+
+session_id: local-e097607b0f5d78a76210e406fdda8a3b9121bbd2dd0a1de0a9f236ef2bbbcc13

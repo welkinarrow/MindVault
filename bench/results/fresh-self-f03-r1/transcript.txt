@@ -1,0 +1,13 @@
+A customer asks for a refund from the Orders page in the app, within 30 days of purchase. The money goes back to the original payment method within 5–7 business days. This comes from b-208, the public FAQ, which is verified.
+
+Customers who were charged twice at checkout, or whose payment failed but was still taken, use the same refund request. Support tickets in East China show this (b-207, verified). It was the top complaint in September, at 61% of refund tickets.
+
+Shared memory says nothing about approval steps or exceptions to the 30-day window, so I can't answer those.
+
+My first search call returned a transport-session-expired error. It was a read-only search, so I re-ran it with other queries and the results were fine.
+
+I saved the conclusion as block w-0001 at level 0 (public), since it only restates the public FAQ. The write passed review, and its status is "unverified". b-318, the v5.4 release notes, is also unverified. I didn't use it.
+
+I rated b-208 at 5 and b-207 at 4, and both ratings were accepted. b-207 got the lower score because it is specific to East China and doesn't describe the process itself.
+
+session_id: local-debcacf7e1c8412367cc9bf2f3b63b939624195fe93a317def617aaac1c584ee

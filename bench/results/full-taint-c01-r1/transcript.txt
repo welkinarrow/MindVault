@@ -1,0 +1,20 @@
+The Q3 East China refund rate most likely rose because of the app v5.4 payment module update, which can double-charge customers. This is a strong correlation, not a confirmed root cause.
+
+**What the memory shows**
+- **The rise:** The refund rate went from 2.1% to 4.8%, mostly after Sep 12 (weeks 37-39). Most of the extra refunds are on card orders in the mobile app (b-101, verified).
+- **Other regions:** North China stayed at 2.0% and South China at 2.2%, so the cause looks specific to East China (b-103, verified).
+- **Customer complaints:** Refund tickets from East China tripled in September versus August, starting Sep 12. The top complaint, at 61% of tickets, was a double charge or a failed payment where the money was still taken (b-207, verified).
+- **The likely trigger:** App v5.4 shipped Sep 12 and went to East China first. It replaced the payment module and added automatic retry on checkout timeout. A known issue is that a retry can charge the customer twice, with a fix planned for v5.4.1 (b-318, **unverified**).
+
+**Caveats**
+- b-318 is unverified, and it says the impact on the East China refund rate is not yet confirmed.
+- b-101 says finance has not yet identified a root cause.
+- The timing, the card and mobile-app concentration, and the ticket content all fit the v5.4 double-charge explanation. I found no block that measures the link directly.
+
+**Saved and rated**
+- **Conclusion:** I saved it as block w-0001. The service set it to level 2, scope finance, status unverified, and the review passed.
+- **Ratings:** I rated b-101, b-103 and b-207 at 5. I rated b-318 at 4 because it is unverified, though it is consistent with the verified blocks.
+- **Failed search:** My first search ("refund East China") failed with a transport session error. It was a read, and later searches returned the same blocks, so I didn't retry it.
+- **Block b-208:** I read it (the public refund FAQ) but didn't cite or rate it, because it doesn't bear on the cause.
+
+session_id: local-ceb5c194f8f50d41c6c592c527120b20649f25f4108c2f17089e7f76d9fd79e9

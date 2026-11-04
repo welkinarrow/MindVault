@@ -1,0 +1,13 @@
+In Q3, East China's refund rate was far higher than North China's or South China's.
+
+- **North China:** 2.0%, flat, within the normal range (b-103, verified).
+- **South China:** 2.2%, flat, within the normal range (b-103, verified).
+- **East China:** rose from 2.1% to 4.8% (b-101, verified). That is about 2.4x North China and 2.2x South China, or 2.8 and 2.6 percentage points higher. The rise was largest in September, after Sep 12, and finance hasn't identified a root cause.
+
+Two other blocks point to a possible cause, but I didn't use them for the comparison. Support tickets (b-207, verified) show East China refund tickets tripling in September, mostly double charges or failed payments. The v5.4 release notes (b-318) describe a Sep 12 payment-module update that may double-charge on retry. b-318 is **unverified**, and it says the effect on the East China refund rate isn't confirmed. So the link between the release and the spike is a hypothesis, not a finding.
+
+My first search call (North China) returned a transport-expired error. It was a read, so nothing was changed. The other searches returned the same blocks.
+
+I saved the conclusion as block w-0001, citing b-101 and b-103. The service set it to level 2, scope finance, status unverified, and the review passed. I rated b-101 and b-103 5/5 for accuracy, and both ratings were accepted.
+
+session_id: local-06724a3dd605249bdeeba73f7eab2d2a21dd49b1598f7a3cba600d79bb099f28

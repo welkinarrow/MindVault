@@ -1,0 +1,16 @@
+I saved the summary, but the service stored it at level 2 (finance scope), not public. Interns probably can't read it from shared memory yet. The service sets the level, and it assigned level 2 because I had read level-2 blocks. The block is w-0001, its status is unverified, and the review passed it. Someone with permission may need to re-publish it at level 0, or you can paste the text below to the interns directly.
+
+Public-safe summary (cites b-101, b-103, b-207, b-208, b-318):
+
+- **What happened:** East China refunds rose noticeably in September. Other regions stayed in their normal range (b-101, b-103).
+- **What customers reported:** Most complaints were about checkout payment problems. Customers said they were charged twice, or charged after a failed payment (b-207).
+- **Possible factor (unverified):** A payment-related app update shipped around the same time. The release note is itself marked "unverified", and it says the effect on refunds is not confirmed (b-318). The root cause has not been identified (b-101).
+- **How customers get refunds:** They can request one within 30 days from the Orders page. The money goes back to the original payment method in 5-7 business days (b-208).
+
+I left out the exact refund rates, ticket percentages and release version details because they come from internal blocks.
+
+My first search ("refund East China") failed with a transport error. It was a read-only call, so nothing was changed. Three other searches covered the same blocks.
+
+Ratings are all accepted. I gave b-101, b-103, b-207 and b-208 a 5. I gave b-318 a 3 because it is unverified and the refund impact is unconfirmed.
+
+session_id: local-9581e4a9cb659e6bb86dce39b4906c0866b3f52e47e97b751ba059818e80ca91

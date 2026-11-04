@@ -1,0 +1,8 @@
+Customer satisfaction fell in Q3. Overall CSAT was 4.1 out of 5, down 0.2 points from 4.3 in Q2. The most common negative themes were delivery speed and checkout problems. Both facts come from b-601, "Q3 customer satisfaction survey summary", which is marked verified.
+
+- **Search results:** One of my first three searches returned a transport error with an unknown outcome. It was a read-only call, so I re-ran it and it succeeded. The broader "satisfaction" searches turned up b-601 as the only relevant block. The other hits were refund-rate and holiday-calendar blocks, which don't bear on this question, so I didn't use them.
+- **What's missing:** b-601 gives no breakdown by region or segment, and no response counts. I can't say more than the overall change and the top themes.
+- **Saved conclusion:** I wrote it as block w-0001 at level 1, and the review passed. Its status is unverified, which is the default for new writes.
+- **Rating:** I rated b-601 5 out of 5 for accuracy, and the rating was accepted.
+
+session_id: local-254fce71f061fa6e7f7a49408f5cf73fcb3a848d5b85639c2ba2278727176bff
