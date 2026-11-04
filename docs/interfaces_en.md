@@ -2,7 +2,7 @@
 
 | Item | Value |
 | --- | --- |
-| Version | v0.8 (draft, pending confirmation by all three members) |
+| Version | v0.9 (draft, pending confirmation by all three members) |
 | Maintainer | A (Memory MCP service and permissions) |
 | Scope | HW6 MVP + HW7 benchmark switches |
 | Last updated | 2026-11-03 |
@@ -169,6 +169,8 @@ The 2026-07-28 protocol removes the handshake and the `Mcp-Session-Id` header, s
 3. Score = the number of distinct tokens that match. An English token matches if the lowercased title + content, split into words on non-alphanumeric characters, contains a word that starts with the token ("refund" matches "refunds", but "rate" does not match "separately"). CJK bigrams match as substrings.
 4. Return blocks with score ≥ 1, ordered by score (highest first), then by block_id; at most 5 results.
 5. If nothing matches, return an empty list rather than an error.
+
+**HW7 change (`SEARCH_MODE=titles`, v0.9, added on A's behalf):** motivated by the predicted and pilot-observed over-labeling of public answers (every keyword hit used to raise the session taint). In titles mode a `query` search returns only `block_id`, `title`, `level`, `scope`, `status`, `author` (no `content`) plus a `search_notice` instead of `data_notice`; listed blocks do **not** raise the session level and do **not** count as read (so they cannot be rated). Content, and taint, come only from reading by `block_id`. The text log shows `LISTED` instead of `ALLOW` for listed blocks; events.jsonl READ records have `result: "LISTED"` and SEARCH records have `search_mode`. The tool description changes to say this. Permissions are unchanged: blocks the agent may not read are still filtered out of the listing. Default `SEARCH_MODE=full` is the behaviour above, unchanged. Assumption: titles are not sensitive (checked for the seed data: no title contains an answer-key canary that the finance agent can read).
 
 **Successful result (same shape for both ways of reading):**
 
@@ -503,6 +505,7 @@ These rules are what verify.py and the demo check. Changing any of them requires
 | LLM_MODEL | None (filled in once B decides) | Review function |
 | REVIEW_TIMEOUT | 30 | Review function |
 | LLM_PROVIDER | openai | Review function (`anthropic` for the benchmark) |
+| SEARCH_MODE | full | Service: `full` or `titles` (HW7 change, see 4.2) |
 | LABEL_MODE | taint | Service: `taint` (our system) or `self` (HW7 baseline: the agent sets the level), see 4.3 (I-7) |
 | RUN_ID | none | Service and review function: copied into every events.jsonl and review_usage.jsonl line |
 | REVIEW_USAGE_LOG | logs/review_usage.jsonl | Review function |
@@ -533,3 +536,4 @@ These rules are what verify.py and the demo check. Changing any of them requires
 | v0.6 | 2026-10-26 | A | Adapted to MCP SDK 2.3.0: authentication uses the SDK's TokenVerifier; sessions are maintained by the server per agent (the new protocol has no session ID); added SESSION_IDLE_SECONDS; log event CONNECT renamed to SESSION and START added |
 | v0.7 | 2026-11-02 | A | HW7: LABEL_MODE switch (I-7) with the self-labelling baseline; structured event log logs/events.jsonl (I-6); review usage log; RUN_ID |
 | v0.8 | 2026-11-03 | A (applied on A's behalf) | HW7: intern `read_scopes` now `["public", "finance"]` at level 0, so the benchmark's leak check depends only on the write level (see 6.1) |
+| v0.9 | 2026-11-03 | A (applied on A's behalf) | HW7 change: `SEARCH_MODE=titles`: keyword search lists titles only and does not raise taint; content and taint come only from reads by block_id (see 4.2). Default unchanged |

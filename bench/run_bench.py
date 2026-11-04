@@ -10,6 +10,8 @@ Usage (from the repo root, .venv active, service NOT running):
     python bench/run_bench.py --tag full --runs 3             # full: 60 runs
     python bench/run_bench.py --tag fresh --cases bench/fresh/cases.json --runs 3
     python bench/run_bench.py --tag t --only c01,c06 --conditions self --runs 1
+    SEARCH_MODE=titles python bench/run_bench.py --tag retest --conditions taint --runs 3
+                                                              # HW7 change (interfaces v0.9)
 
 Each run gets a fresh database and a fresh service, because sessions (and so taint)
 only end after 30 minutes idle. Every run adds one row to bench/results/runs.csv;
@@ -162,7 +164,9 @@ def run_one(case: dict, condition: str, n: int, tag: str, env: dict, host: str, 
            "profile": profile, "agent_exit": agent_exit, "wall_time_s": wall,
            **count_tool_calls(out / "events.jsonl"), "new_blocks": new_blocks, "probe": probe_status,
            "checks_commit": commits["checks"], "code_commit": commits["code"], "started_at": started_at}
-    (out / "meta.json").write_text(json.dumps({**row, "case_def": case}, indent=2) + "\n")
+    # search_mode (HW7 change, v0.9; added on A's behalf) goes in meta.json only, so runs.csv keeps its header
+    (out / "meta.json").write_text(json.dumps({**row, "search_mode": run_env.get("SEARCH_MODE", "full"),
+                                               "case_def": case}, indent=2) + "\n")
     return row
 
 
@@ -192,7 +196,8 @@ def main() -> int:
     index = RESULTS / "runs.csv"
     new_index = not index.exists()
     total = len(cases) * len(args.conditions) * args.runs
-    print(f"{total} runs  tag={args.tag}  checks={commits['checks']}  code={commits['code']}")
+    print(f"{total} runs  tag={args.tag}  checks={commits['checks']}  code={commits['code']}  "
+          f"search_mode={env.get('SEARCH_MODE', 'full')}")
 
     done = 0
     with open(index, "a", newline="") as f:

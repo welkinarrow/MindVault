@@ -2,7 +2,7 @@
 
 | 项目 | 内容 |
 | --- | --- |
-| 版本 | v0.8（草稿，待三人确认） |
+| 版本 | v0.9（草稿，待三人确认） |
 | 维护人 | A（Memory MCP 服务与权限） |
 | 适用范围 | HW6 MVP + HW7 benchmark 开关 |
 | 最后更新 | 2026-11-03 |
@@ -169,6 +169,8 @@ docs/              interfaces.md（本文件）
 3. 得分 = 命中的不同词数。英文词的“命中”指：title + content 小写后按非字母数字字符切成单词，存在以该词开头的单词（refund 能命中 refunds，但 rate 不会命中 separately）。中文二字组按子串匹配。
 4. 返回得分 ≥ 1 的 block，按得分从高到低、得分相同按 block_id 排序，最多 5 条。
 5. 没有结果时返回空列表，不报错。
+
+**HW7 改动（`SEARCH_MODE=titles`，v0.9，代 A 添加）：** 起因是预测并在 pilot 中观察到的公开答案被标高（以前每条关键词命中都会抬高会话污点）。titles 模式下，`query` 检索只返回 `block_id`、`title`、`level`、`scope`、`status`、`author`（不含 `content`），并用 `search_notice` 代替 `data_notice`；列出的 block **不**抬高会话级别，也**不**算"读过"（因此不能评分）。正文和污点只来自按 `block_id` 读取。文本日志对列出的 block 打印 `LISTED` 而不是 `ALLOW`；events.jsonl 的 READ 记录 `result: "LISTED"`，SEARCH 记录多一个 `search_mode`。工具描述也相应说明。权限不变：无权读的 block 仍不会出现在列表里。默认 `SEARCH_MODE=full`，即上面原有的行为。前提假设：标题不敏感（已核对种子数据：财务 agent 能读到的标题里没有答案表中的敏感词）。
 
 **成功返回（两种读法相同）：**
 
@@ -502,6 +504,7 @@ SELECT block_id, accuracy FROM ratings WHERE session_id = ?;
 | LLM_MODEL | 无（B 确定后填入） | 审核函数 |
 | REVIEW_TIMEOUT | 30 | 审核函数 |
 | LLM_PROVIDER | openai | 审核函数（benchmark 用 `anthropic`） |
+| SEARCH_MODE | full | 服务：`full` 或 `titles`（HW7 改动，见 4.2） |
 | LABEL_MODE | taint | 服务：`taint`（我们的系统）或 `self`（HW7 基线：由 agent 自己定级），见 4.3（I-7） |
 | RUN_ID | 无 | 服务和审核函数：写进每一行 events.jsonl 和 review_usage.jsonl |
 | REVIEW_USAGE_LOG | logs/review_usage.jsonl | 审核函数 |
@@ -532,3 +535,4 @@ SELECT block_id, accuracy FROM ratings WHERE session_id = ?;
 | v0.6 | 2026-10-26 | A | 适配 MCP SDK 2.3.0：认证改用 SDK 的 TokenVerifier；会话改由服务端按 agent 维护（新协议没有会话 ID）；新增 SESSION_IDLE_SECONDS；日志 CONNECT 改为 SESSION，新增 START |
 | v0.7 | 2026-11-02 | A | HW7：LABEL_MODE 开关（I-7）及 agent 自己定级的基线；结构化事件日志 logs/events.jsonl（I-6）；审核用量日志；RUN_ID |
 | v0.8 | 2026-11-03 | A（代为修改） | HW7：实习助手 `read_scopes` 改为 `["public", "finance"]`，级别仍为 L0，benchmark 的泄露判定只取决于写入级别（见 6.1） |
+| v0.9 | 2026-11-03 | A（代为修改） | HW7 改动：`SEARCH_MODE=titles`，关键词检索只列标题、不计入污点；正文和污点只来自按 block_id 读取（见 4.2）。默认行为不变 |
