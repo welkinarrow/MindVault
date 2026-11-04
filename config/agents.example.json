@@ -11,7 +11,7 @@
       "agent_id": "intern",
       "key": "<run scripts/gen_keys.py>",
       "level": 0,
-      "read_scopes": ["public"],
+      "read_scopes": ["public", "finance"],
       "write_scope": "public"
     }
   ]
