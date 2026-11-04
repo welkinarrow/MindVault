@@ -12,6 +12,8 @@ ROOT = Path(__file__).resolve().parent.parent
 VALID_SCOPES = {"public", "finance", "support", "release", "rnd", "mgmt"}
 VALID_LANGS = {"zh", "en"}
 VALID_LABEL_MODES = {"taint", "self"}  # HW7 基线开关（I-7）
+# HW7 改动（v0.9，由 Claude 代 A 添加）：titles = 检索只返回标题等元数据、不计入污点
+VALID_SEARCH_MODES = {"full", "titles"}
 
 
 class ConfigError(Exception):
@@ -34,6 +36,7 @@ class Config:
     review_timeout: int
     session_idle_seconds: int
     label_mode: str = "taint"
+    search_mode: str = "full"
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -54,6 +57,10 @@ class Config:
         if label_mode not in VALID_LABEL_MODES:
             raise ConfigError(f"LABEL_MODE 只能是 taint 或 self，当前为 {label_mode!r}")
 
+        search_mode = os.environ.get("SEARCH_MODE", "full")
+        if search_mode not in VALID_SEARCH_MODES:
+            raise ConfigError(f"SEARCH_MODE 只能是 full 或 titles，当前为 {search_mode!r}")
+
         return cls(
             host=os.environ.get("MEMORY_HOST", "127.0.0.1"),
             port=port,
@@ -63,6 +70,7 @@ class Config:
             review_timeout=timeout,
             session_idle_seconds=idle,
             label_mode=label_mode,
+            search_mode=search_mode,
         )
 
 
