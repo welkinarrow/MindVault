@@ -2,10 +2,10 @@
 
 | Item | Value |
 | --- | --- |
-| Version | v0.7 (draft, pending confirmation by all three members) |
+| Version | v0.8 (draft, pending confirmation by all three members) |
 | Maintainer | A (Memory MCP service and permissions) |
 | Scope | HW6 MVP + HW7 benchmark switches |
-| Last updated | 2026-11-02 |
+| Last updated | 2026-11-03 |
 
 This file is the single source of truth for every handoff point between the three of us. If the code and this file disagree, this file wins: update this file first.
 
@@ -336,12 +336,14 @@ This file contains keys and is **not committed**. Only `agents.example.json`, wi
       "agent_id": "intern",
       "key": "<32-character hex key>",
       "level": 0,
-      "read_scopes": ["public"],
+      "read_scopes": ["public", "finance"],
       "write_scope": "public"
     }
   ]
 }
 ```
+
+**HW7 scope decision (v0.8):** the intern can read the `finance` scope but stays at level 0. Without this, every finance write was hidden from the intern by `SCOPE_MISMATCH` in both `LABEL_MODE=taint` and `LABEL_MODE=self`, so the leak comparison could not separate the two conditions. With it, whether the intern can read a finance write depends only on the write's level. Every L1+ finance block is still blocked by level. This is a deliberate change for the benchmark and is reported as such in the HW7 write-up.
 
 ### 6.2 Seed data: data/seed_blocks.json
 
@@ -530,3 +532,4 @@ These rules are what verify.py and the demo check. Changing any of them requires
 | v0.5 | 2026-10-25 | A | Added the MEMORY_LANG variable so switching languages needs no code change |
 | v0.6 | 2026-10-26 | A | Adapted to MCP SDK 2.3.0: authentication uses the SDK's TokenVerifier; sessions are maintained by the server per agent (the new protocol has no session ID); added SESSION_IDLE_SECONDS; log event CONNECT renamed to SESSION and START added |
 | v0.7 | 2026-11-02 | A | HW7: LABEL_MODE switch (I-7) with the self-labelling baseline; structured event log logs/events.jsonl (I-6); review usage log; RUN_ID |
+| v0.8 | 2026-11-03 | A (applied on A's behalf) | HW7: intern `read_scopes` now `["public", "finance"]` at level 0, so the benchmark's leak check depends only on the write level (see 6.1) |

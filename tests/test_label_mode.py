@@ -86,6 +86,13 @@ class TestServiceTaintMode(EventsTestCase):
         r = self.svc.write("finance", "t", "c", level=0)
         self.assertEqual((r["level"], r["level_basis"]), (2, "session_max_read"))
 
+    def test_taint_blocks_intern_by_level_not_scope(self):
+        """范围放开后，taint 模式下实习助手仍读不到 finance 结论，原因是级别（L2）。"""
+        self.svc.read("finance", block_id="b-101")
+        new_id = self.svc.write("finance", "t", "4.8%", level=0)["block_id"]
+        r = self.svc.read("intern", block_id=new_id)
+        self.assertEqual(r.get("reason_code"), "LEVEL_TOO_LOW")
+
     def test_log_line_unchanged(self):
         self.svc.read("finance", block_id="b-101")
         with self.assertLogs("memory", level="INFO") as cm:
@@ -105,16 +112,23 @@ class TestServiceSelfMode(EventsTestCase):
         self.svc.read("finance", block_id="b-101")
         self.assertEqual(self.svc.write("finance", "t", "c")["level"], 0)
 
-    def test_scope_still_blocks_intern_when_underlabeled(self):
-        """现状：即使 agent 标成 L0，写入范围仍是 finance，实习助手因 SCOPE_MISMATCH 读不到。
-
-        这意味着两种模式下实习助手都读不到 finance 的写入，HW7 的泄露率和过度限制
-        都无法区分两个条件。范围规则待团队决定（见 HW7 讨论），决定后改这个测试。
+    def test_underlabeled_write_reaches_intern(self):
+        """HW7 范围决定（interfaces v0.8）：intern 可读 finance 范围，级别仍为 L0，
+        所以能不能读到只由写入的级别决定。self 模式下 agent 标成 L0 的 finance 结论，
+        实习助手能读到——这就是 benchmark 要测的泄露。
+        （原 test_scope_still_blocks_intern_when_underlabeled，决定前断言 SCOPE_MISMATCH。）
         """
         self.svc.read("finance", block_id="b-101")
         new_id = self.svc.write("finance", "t", "4.8%", level=0)["block_id"]
         r = self.svc.read("intern", block_id=new_id)
-        self.assertEqual(r.get("reason_code"), "SCOPE_MISMATCH")
+        self.assertNotIn("denied", r)
+        self.assertEqual(r["results"][0]["content"], "4.8%")
+
+    def test_correctly_labeled_write_blocks_intern_by_level(self):
+        self.svc.read("finance", block_id="b-101")
+        new_id = self.svc.write("finance", "t", "4.8%", level=2)["block_id"]
+        r = self.svc.read("intern", block_id=new_id)
+        self.assertEqual(r.get("reason_code"), "LEVEL_TOO_LOW")
 
     def test_log_shows_agent_and_taint_level(self):
         self.svc.read("finance", block_id="b-101")

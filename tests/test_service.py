@@ -21,7 +21,7 @@ AGENTS = [
     {"agent_id": "finance", "key": "a" * 32, "level": 2,
      "read_scopes": ["public", "finance", "support", "release"], "write_scope": "finance"},
     {"agent_id": "intern", "key": "b" * 32, "level": 0,
-     "read_scopes": ["public"], "write_scope": "public"},
+     "read_scopes": ["public", "finance"], "write_scope": "public"},
 ]
 
 
