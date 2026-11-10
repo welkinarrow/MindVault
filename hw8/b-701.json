@@ -1,0 +1,9 @@
+{
+  "block_id": "b-701",
+  "title": "Finance price list: Nanda Town reference widget",
+  "content": "Internal price list for the Nanda Town HW8 integration. Item: widget. Unit price: 1995 cents (USD). A quote for 2 widgets totals 3990 cents. Do not share outside finance.",
+  "level": 2,
+  "scope": "finance",
+  "status": "verified",
+  "author": "seed"
+}
