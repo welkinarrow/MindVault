@@ -5,10 +5,13 @@
 **Branch:** `hw9-hr` on github.com/welkinarrow/MindVault.
 **Interface docs:** [`docs/AGENT_GUIDE.md`](../AGENT_GUIDE.md).
 **Test plan, written before the run:** [`docs/hw9/cold-start-plan.md`](cold-start-plan.md).
-**Was the test independent?** No, it was **self-run**. Tripti set it up. The client was a fresh
-agent session that had never seen our repo or demo. No other team's agent was used.
+**Was the test independent?** No, it was **self-run**. Tripti set up runs 1 and 2 (Hermes);
+Jack ran run 3 on his own machine with a different client (Claude Code). Every client was a
+fresh agent session that had never seen our repo or demo. No other team's agent was used.
 **Manual help during the runs:** none. Nobody passed messages between the agents. Between
-run 1 and run 2 we changed one file (the reviewer prompt) and started a fresh agent.
+run 1 and run 2 we changed one file (the reviewer prompt) and started a fresh agent. In run 3
+the client's tools were pre-approved before the start, and the intern's task names the record
+ID that the first agent's write returned.
 
 ## 1. Interface (2 pts)
 
@@ -97,6 +100,43 @@ All 6 criteria passed in run 2. All three run-2 agents were cold. The second and
 also fresh `coldstart` sessions that got only the guide and their key. The only thing that
 passed between the agents was MindVault itself.
 
+### Run 3 (a second client stack, on the updated guide)
+
+**Why:** runs 1 and 2 left three things open. Only one client stack had been tried. The
+guide's new "don't print your key" rule had not met a fresh agent. The second agent's task
+gave it the ID `w-0001`.
+
+**Setup:** run by Jack on a different machine. The plan and criteria were committed before the
+run: [`run3-plan.md`](run3-plan.md), commit `f7379b9` at 21:43; the first agent call was at
+21:52.
+- **Client:** Claude Code CLI 2.1.270 in headless mode (`claude -p`), model
+  `claude-opus-5[1m]`, one fresh session per agent.
+- **Isolation:** each session started in its own empty folder holding only `AGENT_GUIDE.md`
+  and `KEY`. The session's init event lists no MCP servers and no web tools.
+- **Same service and HR seed** as runs 1 and 2, on a fresh DB.
+- **Two deliberate changes from run 2:**
+  - no task says "do not print the key"
+  - the second agent's task gives no record ID
+
+| # | Criterion (from [`run3-plan.md`](run3-plan.md)) | Result |
+|---|---|---|
+| 1 | Connected from the docs alone | **Yes.** It wrote its own HTTP client (`mv.py`) from the guide; `READ people-ops ... ALLOW` |
+| 2 | Correct brief | **Yes.** Attrition 3%→11% (b-101); 9 of 11 leavers named night on-call (b-103); night pages 45→340 in September, 70% of them noise (b-501); on-call satisfaction 3.9→2.1 (b-207); b-318 flagged unverified. b-412 was filtered as `LEVEL_TOO_LOW` every time. It used only aggregates: no names, no salaries |
+| 3 | Saved correctly | **Yes.** `w-0001`, L2 / hr / unverified, review `pass`: "cites b-103 in aggregate only ... without naming individuals" |
+| 4 | Ratings honest | **Yes.** 5 of 5 accepted, all for records it had read |
+| 5 | Consumer finds it unaided | **Yes.** The `hr` agent searched "attrition Austin", got `w-0001` in the results, and read it (`ALLOW`). It also tried `w-0002` (`NOT_FOUND`) to check for other conclusions. It re-read all 5 cited records, did no new analysis and wrote nothing |
+| 6 | Boundary holds | **Yes.** `intern` got `LEVEL_TOO_LOW` ("L2 access required. You can request it from the HR owner."), quoted it exactly and didn't guess the content |
+| 7 | Key not printed | **Yes, 0 of 3.** No tool output in any of the three transcripts contains the key. Each agent read `KEY` inside its own script. In runs 1 and 2, both cold agents had run `cat KEY` |
+| 8 | No outside help | **Yes.** Its only tool calls were Bash, Read and Write inside its own folder. It made no MCP or web calls and never touched `github.com` |
+
+All 8 criteria passed. The consumer's answer also shows real use of the result rather than a
+copy: it noticed that `w-0001` calls the on-call "unpaid", while b-318 only says extra pay
+"has not been approved yet", and it called that a slight overstatement.
+
+Cost: 9, 6 and 5 turns; $0.45, $0.34 and $0.22. Evidence: [`evidence/run3/`](evidence/run3/)
+(three transcripts, `events.jsonl` filtered by `RUN_ID=hw9-run3`, `written-blocks.txt`),
+exported and redacted with `scripts/export_run.py`.
+
 ## 3. Boundary, friction and what is still unproven (2 pts)
 
 - **Boundary tested:** a level-0 reader against a level-2 conclusion (criterion 6). The cold
@@ -105,7 +145,8 @@ passed between the agents was MindVault itself.
   - Both run-1 and run-2 cold agents ran `cat KEY` and printed their key to the terminal,
     even though the guide says not to print it. The two later run-2 agents' tasks said "pass
     it by file path, do not print it", and neither printed it (0 of 2). We moved that wording
-    into `AGENT_GUIDE.md` §2. A fresh cold run on the new guide has not been done yet.
+    into `AGENT_GUIDE.md` §2. Run 3 then gave the new guide to three fresh Claude Code
+    sessions whose tasks did not mention the key. None printed it (0 of 3).
   - Keyword search returned nothing for "resignation" and "turnover", which is a search
     limitation. The agent recovered by trying other words.
 - **Test-setup problem, not counted against MindVault:** we restarted the MindVault service
@@ -115,7 +156,12 @@ passed between the agents was MindVault itself.
   service up, or wait for Hermes to reconnect. In run 2 we used fresh cold sessions, which
   don't depend on Hermes's MCP connection, for the second agent and the intern.
 - **Still unproven:**
-  - Only one client stack (Hermes plus a hand-written HTTP client) and one task were tried.
+  - Two client stacks were tried: Hermes in runs 1 and 2, Claude Code in run 3. Both
+    agents wrote their own HTTP client from the guide, and neither used an MCP client
+    config. Both run on Anthropic models, and only one task was tried.
+  - The reviewer passed `w-0001` although it slightly overstates b-318 ("unpaid" vs "not
+    approved yet"). The reviewer checks consistency and safety, not fine wording; in run 3
+    the consumer caught it.
   - The test was self-run, not another team's agent.
   - The reviewer fix was tested on 2 HR samples plus 5 finance samples. That is a small fixed
     set, and a different phrasing of personal data could still get through or be over-flagged.
@@ -169,6 +215,23 @@ python review/run_samples.py review/samples_hr.json data/seed_blocks_hr.json
 python review/run_samples.py review/samples.json data/seed_blocks.json
 ```
 
+**Run 3 (Claude Code as the client).** Keep the service from step 1 running with
+`RUN_ID=hw9-run3`. In a second terminal that has **not** loaded `mindvault.env`:
+
+```bash
+REPO=$PWD; OUT=~/hw9-run3; mkdir -p "$OUT"
+CC=(--strict-mcp-config --mcp-config '{"mcpServers":{}}' --disallowedTools "WebFetch,WebSearch" --allowedTools "Bash,Read,Write,Edit" --output-format stream-json --verbose)
+cold() {
+  local D=$(mktemp -d); cp "$REPO/docs/AGENT_GUIDE.md" "$D/"
+  python3 -c "import json,sys; a={x['agent_id']:x['key'] for x in json.load(open(sys.argv[1]))['agents']}; open(sys.argv[3],'w').write(a[sys.argv[2]])" "$REPO/config/agents.json" "$1" "$D/KEY"
+  (cd "$D" && ENABLE_CLAUDEAI_MCP_SERVERS=false claude -p "$2" "${CC[@]}") > "$OUT/$1.jsonl"
+}
+cold people-ops "$(cat docs/hw9/evidence/cold-task.txt)"
+cold hr "<T2 text from run3-plan.md>"
+cold intern "<T3 text from run3-plan.md, with the ID T1 returned>"
+python scripts/export_run.py "$OUT" hw9-run3 docs/hw9/evidence/run3 people-ops hr intern
+```
+
 ## 5. Contributions
 
 - **Tripti (C):**
@@ -179,5 +242,9 @@ python review/run_samples.py review/samples.json data/seed_blocks.json
   - this write-up
 - **Joyce (B):** the final project slides and demo video; the original reviewer and control
   room.
-- **Jack (A):** the memory service; the memory-layer design for the next phase and its
-  implementation plan.
+- **Jack (A):**
+  - the memory service
+  - run 3: the plan, the Claude Code cold-start client, the three runs and their evidence,
+    and `scripts/export_run.py`
+  - the reproduce section and the setup fix in `AGENT_GUIDE.md` §6
+  - the memory-layer design for the next phase and its implementation plan
