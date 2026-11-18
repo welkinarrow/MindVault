@@ -6,7 +6,7 @@ CREATE TABLE blocks (
     title         TEXT NOT NULL,
     content       TEXT NOT NULL,
     level         INTEGER NOT NULL CHECK (level BETWEEN 0 AND 3),
-    scope         TEXT NOT NULL CHECK (scope IN ('public', 'finance', 'support', 'release', 'rnd', 'mgmt')),
+    scope         TEXT NOT NULL CHECK (scope IN ('public', 'finance', 'hr', 'support', 'release', 'rnd', 'mgmt')),
     status        TEXT NOT NULL CHECK (status IN ('verified', 'unverified', 'quarantined')),
     author        TEXT NOT NULL,          -- 种子数据为 'seed'，写入为 agent_id
     review_action TEXT CHECK (review_action IS NULL OR review_action IN ('pass', 'quarantine')),

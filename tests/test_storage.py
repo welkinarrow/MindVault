@@ -106,9 +106,9 @@ class TestAgents(unittest.TestCase):
             "重复密钥": lambda a: a[1].update(key="a" * 32),
             "重复 ID": lambda a: a[1].update(agent_id="finance"),
             "级别为 bool": lambda a: a[0].update(level=True),
-            "非法范围": lambda a: a[0].update(read_scopes=["hr"]),
+            "非法范围": lambda a: a[0].update(read_scopes=["legal"]),
             "空范围": lambda a: a[0].update(read_scopes=[]),
-            "非法可写范围": lambda a: a[0].update(write_scope="hr"),
+            "非法可写范围": lambda a: a[0].update(write_scope="legal"),
         }
         for name, mutate in cases.items():
             with self.subTest(name):

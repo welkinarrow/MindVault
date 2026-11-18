@@ -2,7 +2,8 @@
 
 Run it right after the finance agent has finished the demo task, with the
 service still running (this terminal also needs .venv activated):
-    python scripts/verify.py
+    python scripts/verify.py                 # finance scenario
+    DEMO_AGENT=hr python scripts/verify.py   # HR scenario (SEED_FILE=data/seed_blocks_hr.json)
 
 Checks:
   1. The finance agent's new block is level L2, scope finance, status unverified.
@@ -18,6 +19,7 @@ Prints PASS or FAIL per item; exit code 0 only if everything passes.
 """
 
 import asyncio
+import os
 import re
 import sqlite3
 import sys
@@ -35,13 +37,25 @@ from server.config import Config, ConfigError, load_agents  # noqa: E402
 
 LOG_FILE = ROOT / "logs" / "server.log"
 
-# What the evidence blocks support (b-101 refund rise, b-207 payment complaints,
-# b-318 the Sep 12 v5.4 payment-module release). Each group needs one match.
-EVIDENCE_TERMS = {
-    "refund rise (b-101)": ("refund",),
-    "payment problem (b-207)": ("payment", "charge", "charged"),
-    "September release (b-318)": ("5.4", "release", "sep 12", "september 12"),
+# Which agent ran the demo: finance (default, HW6-HW8 scenario) or hr (HW9 scenario).
+DEMO_AGENT = os.environ.get("DEMO_AGENT", "finance")
+
+# What the evidence blocks support, per scenario. Each group needs one match.
+# finance: b-101 refund rise, b-207 payment complaints, b-318 the Sep 12 v5.4 release.
+# hr:      b-101 attrition rise, b-207 on-call complaints, b-318 the Sep 1 rotation change.
+EVIDENCE = {
+    "finance": {
+        "refund rise (b-101)": ("refund",),
+        "payment problem (b-207)": ("payment", "charge", "charged"),
+        "September release (b-318)": ("5.4", "release", "sep 12", "september 12"),
+    },
+    "hr": {
+        "attrition rise (b-101)": ("attrition", "resign", "turnover", "leaver"),
+        "on-call complaints (b-207)": ("on-call", "on call", "paged", "pages", "paging"),
+        "Sep 1 rotation change (b-318)": ("rotation", "24/7", "sep 1", "september 1"),
+    },
 }
+EVIDENCE_TERMS = EVIDENCE[DEMO_AGENT]
 
 failures = 0
 
@@ -87,26 +101,26 @@ def check_database(db_path: Path) -> str | None:
     conn.row_factory = sqlite3.Row
     try:
         block = conn.execute(
-            "SELECT * FROM blocks WHERE author = 'finance' ORDER BY created_at DESC LIMIT 1"
+            "SELECT * FROM blocks WHERE author = ? ORDER BY created_at DESC LIMIT 1", (DEMO_AGENT,)
         ).fetchone()
         if block is None:
-            check(False, "The finance agent wrote a new block")
+            check(False, f"The {DEMO_AGENT} agent wrote a new block")
             return None
 
         print(f"  New block: {block['block_id']}  \"{block['title']}\"")
-        check(block["level"] == 2 and block["scope"] == "finance" and block["status"] == "unverified",
+        check(block["level"] == 2 and block["scope"] == DEMO_AGENT and block["status"] == "unverified",
               f"1. New block is L{block['level']} / {block['scope']} / {block['status']}"
-              " (expected L2 / finance / unverified)")
+              f" (expected L2 / {DEMO_AGENT} / unverified)")
 
         rows = conn.execute(
-            "SELECT session_id, block_id FROM ratings WHERE agent_id = 'finance' ORDER BY id"
+            "SELECT session_id, block_id FROM ratings WHERE agent_id = ? ORDER BY id", (DEMO_AGENT,)
         ).fetchall()
         if not rows:
-            check(False, "2. The finance agent rated the blocks it used")
+            check(False, f"2. The {DEMO_AGENT} agent rated the blocks it used")
         else:
             session_id = rows[-1]["session_id"]
             rated = {r["block_id"] for r in rows if r["session_id"] == session_id}
-            read = reads_by_session("finance").get(session_id)
+            read = reads_by_session(DEMO_AGENT).get(session_id)
             if read is None:
                 check(False, f"2. Found the reads of session {session_id} in logs/server.log"
                              " (restart the service before each run)")
@@ -118,7 +132,7 @@ def check_database(db_path: Path) -> str | None:
         text = f"{block['title']} {block['content']}".lower()
         missing = [name for name, terms in EVIDENCE_TERMS.items()
                    if not any(t in text for t in terms)]
-        check(not missing, "3. Conclusion matches the evidence: refund rise, payment problem, Sep 12 release",
+        check(not missing, "3. Conclusion matches the evidence: " + ", ".join(EVIDENCE_TERMS),
               f"missing: {missing}")
         return block["block_id"]
     finally:
@@ -128,13 +142,13 @@ def check_database(db_path: Path) -> str | None:
 async def check_service(url: str, keys: dict, new_id: str | None) -> None:
     """Checks 4-5, through MCP like a real agent."""
     try:
-        async with Agent(url, keys["finance"]) as finance:
-            r = await finance.call("memory_rate", {"ratings": [
+        async with Agent(url, keys[DEMO_AGENT]) as demo:
+            r = await demo.call("memory_rate", {"ratings": [
                 {"block_id": "b-412", "accuracy": 5, "reason": "verify.py: never read"}]})
             code = (r.get("results") or [{}])[0].get("reason_code")
-            check(code == "NOT_READ_IN_SESSION", "4. Finance rating b-412 without reading it is refused", r)
+            check(code == "NOT_READ_IN_SESSION", f"4. {DEMO_AGENT} rating b-412 without reading it is refused", r)
     except Exception as e:
-        check(False, f"4. Finance key call failed: {type(e).__name__}: {e}")
+        check(False, f"4. {DEMO_AGENT} key call failed: {type(e).__name__}: {e}")
 
     if new_id is None:
         check(False, "5. No new block to test the intern against")

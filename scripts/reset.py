@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMA = ROOT / "server" / "schema.sql"
 
-VALID_SCOPES = {"public", "finance", "support", "release", "rnd", "mgmt"}
+VALID_SCOPES = {"public", "finance", "hr", "support", "release", "rnd", "mgmt"}
 SEED_STATUSES = {"verified", "unverified"}           # 种子数据不允许 quarantined
 REQUIRED_FIELDS = {"block_id", "title", "content", "level", "scope", "status", "author"}
 DEMO_BLOCKS = {"b-101", "b-207", "b-318", "b-412"}   # 演示必需

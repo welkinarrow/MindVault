@@ -9,7 +9,7 @@ from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 
-VALID_SCOPES = {"public", "finance", "support", "release", "rnd", "mgmt"}
+VALID_SCOPES = {"public", "finance", "hr", "support", "release", "rnd", "mgmt"}
 VALID_LANGS = {"zh", "en"}
 VALID_LABEL_MODES = {"taint", "self"}  # HW7 基线开关（I-7）
 # HW7 改动（v0.9，由 Claude 代 A 添加）：titles = 检索只返回标题等元数据、不计入污点

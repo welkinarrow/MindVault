@@ -4,14 +4,36 @@
       "agent_id": "finance",
       "key": "<run scripts/gen_keys.py>",
       "level": 2,
-      "read_scopes": ["public", "finance", "support", "release"],
+      "read_scopes": [
+        "public",
+        "finance",
+        "support",
+        "release"
+      ],
       "write_scope": "finance"
+    },
+    {
+      "agent_id": "hr",
+      "key": "<run scripts/gen_keys.py>",
+      "level": 2,
+      "read_scopes": [
+        "public",
+        "hr",
+        "rnd",
+        "release",
+        "support"
+      ],
+      "write_scope": "hr"
     },
     {
       "agent_id": "intern",
       "key": "<run scripts/gen_keys.py>",
       "level": 0,
-      "read_scopes": ["public", "finance"],
+      "read_scopes": [
+        "public",
+        "finance",
+        "hr"
+      ],
       "write_scope": "public"
     }
   ]

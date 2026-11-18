@@ -15,6 +15,7 @@ SCOPE_OWNERS = {
     "zh": {
         "public": "任意负责人",
         "finance": "财务负责人",
+        "hr": "人力资源负责人",
         "support": "客服负责人",
         "release": "发布负责人",
         "rnd": "研发负责人",
@@ -23,6 +24,7 @@ SCOPE_OWNERS = {
     "en": {
         "public": "any owner",
         "finance": "the finance owner",
+        "hr": "the HR owner",
         "support": "the support owner",
         "release": "the release owner",
         "rnd": "the R&D owner",

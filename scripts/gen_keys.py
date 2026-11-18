@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "config" / "agents.example.json"
 OUTPUT = ROOT / "config" / "agents.json"
 
-VALID_SCOPES = {"public", "finance", "support", "release", "rnd", "mgmt"}
+VALID_SCOPES = {"public", "finance", "hr", "support", "release", "rnd", "mgmt"}
 
 
 def validate(agents: list[dict]) -> None:

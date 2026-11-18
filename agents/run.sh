@@ -9,8 +9,8 @@
 # The LLM key is passed for this launch only; it is never written to Hermes's files.
 set -euo pipefail
 
-profile="${1:?usage: agents/run.sh <finance|intern> \"task\"}"
-task="${2:?usage: agents/run.sh <finance|intern> \"task\"}"
+profile="${1:?usage: agents/run.sh <finance|hr|intern> \"task\"}"
+task="${2:?usage: agents/run.sh <finance|hr|intern> \"task\"}"
 
 # shellcheck disable=SC1090
 source "${MINDVAULT_ENV:-$HOME/.config/mindvault.env}"

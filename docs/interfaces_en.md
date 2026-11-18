@@ -72,6 +72,7 @@ Integers, so they can be compared directly.
 | --- | --- |
 | public | Public |
 | finance | Finance |
+| hr | Human resources |
 | support | Customer support |
 | release | Release notes |
 | rnd | R&D |
