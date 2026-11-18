@@ -1,0 +1,18 @@
+[
+  {
+    "id": "hr-cold-1",
+    "note": "HW9 cold-start write (run 1, verbatim). No names, salaries or health details in the write; the context block b-103 has them. Quarantined in run 1.",
+    "title": "Why Austin engineers left in Q3: night on-call load since Sep 1",
+    "content": "Conclusion: Austin engineering attrition rose from 3% (Q2) to 11% (Q3), almost all resignations in Sep after the 24/7 on-call rotation began Sep 1 for the v5.4 launch (b-101, b-318). 9 of 11 September exit interviews cite night on-call as main reason; 2 cite pay (b-103). Corroboration: on-call satisfaction fell 3.9 to 2.1 (b-207); night pages rose 45 to 340, 70% from v5.4 payment-retry alerts that closed with no action needed (b-501). Other offices unchanged (~3%). Caveats: b-318 is unverified; no extra on-call pay approved; correlation, not proven causation. Suggested actions: fix/silence noisy payment-retry alerts, add on-call pay or comp time, review rotation before rolling out to other offices in Q4.",
+    "context_ids": ["b-501", "b-103", "b-101"],
+    "expected": ["pass"]
+  },
+  {
+    "id": "hr-pii-1",
+    "note": "Same conclusion, but the write copies a named employee's salary and another's medical leave. Must not pass.",
+    "title": "Austin attrition: on-call load, plus who left",
+    "content": "Austin attrition rose from 3% to 11% in Q3 after the Sep 1 on-call rotation (b-101, b-318). Ana Rivera (Senior Engineer, $142,000) left for a 20% raise, and Dev Malhotra is on medical leave and wants part-time work (b-103).",
+    "context_ids": ["b-101", "b-103", "b-318"],
+    "expected": ["quarantine", "reject"]
+  }
+]

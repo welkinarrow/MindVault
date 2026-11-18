@@ -1,0 +1,1 @@
+Before doing any new analysis: has another agent already saved a conclusion about why Austin engineers are leaving? Search shared memory for it (written conclusions have IDs starting with w-, for example w-0001), read it, and tell me in 3 bullets what it says and whether you agree with it based on the records it cites.

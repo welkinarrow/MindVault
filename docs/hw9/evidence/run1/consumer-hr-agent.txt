@@ -1,0 +1,24 @@
+I'll start by searching shared memory for an existing conclusion.
+
+
+<invoke name="memory_read">
+<parameter name="query">Austin attrition</parameter>
+</invoke>
+<invoke name="memory_read">
+<parameter name="query">Austin engineers leaving</parameter>
+</invoke>
+<invoke name="memory_read">
+<parameter name="query">Austin</parameter>
+</invoke>
+
+
+<invoke name="memory_read">
+<parameter name="query">Austin attrition</parameter>
+</invoke>
+<invoke name="memory_read">
+<parameter name="query">Austin engineers leaving</parameter>
+</invoke>
+<invoke name="memory_read">
+<parameter name="query">Austin</parameter>
+</invoke>
+

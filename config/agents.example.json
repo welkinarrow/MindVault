@@ -26,6 +26,19 @@
       "write_scope": "hr"
     },
     {
+      "agent_id": "people-ops",
+      "key": "<run scripts/gen_keys.py>",
+      "level": 2,
+      "read_scopes": [
+        "public",
+        "hr",
+        "rnd",
+        "release",
+        "support"
+      ],
+      "write_scope": "hr"
+    },
+    {
       "agent_id": "intern",
       "key": "<run scripts/gen_keys.py>",
       "level": 0,

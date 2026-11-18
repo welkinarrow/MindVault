@@ -1,0 +1,4 @@
+<invoke name="memory_read">
+<parameter name="block_id">w-0001</parameter>
+</invoke>
+

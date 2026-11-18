@@ -1,7 +1,8 @@
 """Run review() on the samples in review/samples.json and print PASS/FAIL.
 
 Usage (from the repo root, with LLM_API_KEY and LLM_MODEL set):
-    python3 review/run_samples.py
+    python3 review/run_samples.py                                  # finance samples
+    python3 review/run_samples.py review/samples_hr.json data/seed_blocks_hr.json
 """
 
 import json
@@ -16,9 +17,11 @@ from reviewer import review  # noqa: E402
 
 
 def main():
-    with open(os.path.join(ROOT, "data", "seed_blocks.json"), encoding="utf-8") as f:
+    samples_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "samples.json")
+    seed_path = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "data", "seed_blocks.json")
+    with open(seed_path, encoding="utf-8") as f:
         seed = {b["block_id"]: b for b in json.load(f)}
-    with open(os.path.join(HERE, "samples.json"), encoding="utf-8") as f:
+    with open(samples_path, encoding="utf-8") as f:
         samples = json.load(f)
 
     failures = 0

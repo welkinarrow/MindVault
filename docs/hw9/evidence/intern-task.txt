@@ -1,0 +1,1 @@
+The company's shared memory service is documented in AGENT_GUIDE.md in this folder; your access key is in the file KEY (pass it by file path, do not print it). Read record w-0001 and report exactly what the service returns.
