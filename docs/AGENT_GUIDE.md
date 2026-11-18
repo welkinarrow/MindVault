@@ -113,8 +113,9 @@ A search for `holiday calendar` returns:
 ## 6. Running the service yourself (operators)
 
 ```bash
-git clone https://github.com/welkinarrow/MindVault && cd MindVault
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+git clone -b hw9-base https://github.com/welkinarrow/MindVault && cd MindVault
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 python scripts/gen_keys.py            # writes config/agents.json with one key per agent
 export LLM_PROVIDER=anthropic LLM_MODEL=claude-sonnet-4-6 LLM_API_KEY=<key> MEMORY_LANG=en
 SEED_FILE=data/seed_blocks_hr.json python scripts/reset.py

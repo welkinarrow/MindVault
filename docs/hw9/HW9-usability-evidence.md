@@ -122,7 +122,54 @@ passed between the agents was MindVault itself.
   - The HW7 leak numbers (self-labelling leaked in 8 of 42 runs, taint in 0 of 42) come from
     the finance scenario and were not re-run on HR.
 
-## 4. Contributions
+## 4. How to reproduce
+
+All commands run from a clone of tag `hw9-base`. Keys and the LLM API key stay outside the
+repo; nothing below prints a key.
+
+**1. Start the service** (terminal 1). Setup is in [`AGENT_GUIDE.md`](../AGENT_GUIDE.md) §6.
+
+```bash
+source .venv/bin/activate
+source ~/.config/mindvault.env    # LLM_PROVIDER=anthropic, LLM_MODEL=claude-sonnet-4-6, LLM_API_KEY, MEMORY_LANG=en
+SEED_FILE=data/seed_blocks_hr.json python scripts/reset.py
+python -m server.app              # http://127.0.0.1:8000/mcp; log in logs/events.jsonl
+```
+
+**2. Create the cold client once.** Install Hermes as in [`agents/README.md`](../../agents/README.md),
+then run `hermes profile create coldstart --no-alias --no-skills`. Leave `SOUL.md` empty. In
+`~/.hermes/profiles/coldstart/config.yaml`, use the same settings as the other profiles with
+two changes:
+- leave `terminal` and `file` out of `disabled_toolsets`
+- remove the `mcp_servers` block
+
+The agent has no MindVault tools; it must connect from the guide alone.
+
+**3. Run the cold agent in an empty folder** (terminal 2):
+
+```bash
+REPO=$PWD; D=$(mktemp -d)
+cp docs/AGENT_GUIDE.md "$D/"
+python -c "import json,sys; a={x['agent_id']:x for x in json.load(open('config/agents.json'))['agents']}; open(sys.argv[1],'w').write(a['people-ops']['key'])" "$D/KEY"
+cd "$D" && hermes -p coldstart chat -Q --api-key "$ANTHROPIC_API_KEY" -q "$(cat "$REPO/docs/hw9/evidence/cold-task.txt")"
+```
+
+**4. Second agent and boundary check.** Repeat step 3, each in a new empty folder:
+- with the `hr` key and `consumer-task.txt`
+- with the `intern` key and `intern-task.txt`
+
+**5. Check against the criteria.** Compare `logs/events.jsonl` with the six criteria in
+[`cold-start-plan.md`](cold-start-plan.md). Look for the `READ ... ALLOW` lines, the
+`memory_write` review action, the ratings and the intern's `LEVEL_TOO_LOW`.
+
+**Reviewer regression test** (no service needed, needs `LLM_API_KEY`):
+
+```bash
+python review/run_samples.py review/samples_hr.json data/seed_blocks_hr.json
+python review/run_samples.py review/samples.json data/seed_blocks.json
+```
+
+## 5. Contributions
 
 - **Tripti (C):**
   - the HR scenario (seed data, `hr` scope, `hr` agent, `verify.py`)
