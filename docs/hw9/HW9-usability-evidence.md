@@ -237,11 +237,12 @@ python scripts/export_run.py "$OUT" hw9-run3 docs/hw9/evidence/run3 people-ops h
 - **Tripti (C):**
   - the HR scenario (seed data, `hr` scope, `hr` agent, `verify.py`)
   - `AGENT_GUIDE.md`
-  - the cold-start plan, both runs and the evidence
+  - the cold-start plan, runs 1 and 2 and their evidence
   - the reviewer fix and its regression samples
+  - the demo video, recorded from Joyce's control room (`frontend/record_hr_demo.py`)
   - this write-up
-- **Joyce (B):** the final project slides and demo video; the original reviewer and control
-  room.
+- **Joyce (B):** the final project slides; the original reviewer and the control room
+  shown in the demo video.
 - **Jack (A):**
   - the memory service
   - run 3: the plan, the Claude Code cold-start client, the three runs and their evidence,
