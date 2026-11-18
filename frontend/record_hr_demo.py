@@ -2,11 +2,12 @@
 
 The calls are the ones our HW9 cold-start agent made (searches, write, ratings), then the
 intern's read. They are replayed against the real service, so every allow, deny, label and
-review decision on screen is the service's own. Narration is macOS `say`; ffmpeg mixes it in.
+review decision on screen is the service's own. Narration is a Microsoft Edge neural voice
+(edge-tts, free, no key; NARRATION_VOICE to change it); ffmpeg mixes it in.
 
 Run with the service (HR seed) and the control room already up, agents file = hr + intern:
     python frontend/record_hr_demo.py --out /path/to/mindvault-hr-demo.mp4
-Needs: playwright (+ chromium), ffmpeg, macOS `say` and `afinfo`.
+Needs: playwright (+ chromium), edge-tts, ffmpeg, macOS `afinfo`.
 """
 
 import argparse
@@ -22,12 +23,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+import edge_tts  # noqa: E402
 from playwright.async_api import async_playwright  # noqa: E402
 
 from scripts.selftest import Agent  # noqa: E402
 from server.config import Config, load_agents  # noqa: E402
 
-VOICE, RATE = "Samantha", "190"
+VOICE = os.environ.get("NARRATION_VOICE", "en-US-AvaNeural")  # Microsoft Edge neural voice
+RATE = os.environ.get("NARRATION_RATE", "+0%")
 VIEWPORT = {"width": 1440, "height": 810}
 FRONTEND = os.environ.get("FRONTEND_URL", "http://127.0.0.1:8100")
 
@@ -52,8 +55,8 @@ SCRIPT = [
 ]
 
 
-def tts(text: str, path: Path) -> float:
-    subprocess.run(["say", "-v", VOICE, "-r", RATE, "-o", str(path), text], check=True)
+async def tts(text: str, path: Path) -> float:
+    await edge_tts.Communicate(text, VOICE, rate=RATE).save(str(path))
     out = subprocess.run(["afinfo", str(path)], capture_output=True, text=True, check=True)
     line = next(l for l in out.stdout.splitlines() if "estimated duration" in l)
     return float(line.split(":")[1].split()[0])
@@ -67,8 +70,8 @@ async def run(out: Path) -> None:
 
     clips = []
     for i, (line, _) in enumerate(SCRIPT):
-        clip = work / f"line{i}.aiff"
-        clips.append((clip, tts(line, clip)))
+        clip = work / f"line{i}.mp3"
+        clips.append((clip, await tts(line, clip)))
 
     new_id = {}
 
@@ -114,10 +117,10 @@ async def run(out: Path) -> None:
             if action:
                 await asyncio.sleep(0.8)
                 await actions[action](hr)
-            rest = dur + 0.6 - (time.monotonic() - start)
+            rest = dur + 0.1 - (time.monotonic() - start)
             if rest > 0:
                 await asyncio.sleep(rest)
-        await asyncio.sleep(2.0)
+        await asyncio.sleep(1.5)
         total = time.monotonic() - t0
         await ctx.close()
         await browser.close()
