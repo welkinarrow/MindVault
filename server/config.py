@@ -3,13 +3,17 @@
 import hmac
 import json
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 
-VALID_SCOPES = {"public", "finance", "hr", "support", "release", "rnd", "mgmt"}
+# Used when agents.json has no "scopes" list (every config written before scopes were configurable).
+DEFAULT_SCOPES = frozenset({"public", "finance", "hr", "support", "release", "rnd", "mgmt"})
+VALID_SCOPES = DEFAULT_SCOPES  # kept for older imports; the real list comes from load_scopes()
+SCOPE_NAME = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
 VALID_LANGS = {"zh", "en"}
 VALID_LABEL_MODES = {"taint", "self"}  # HW7 基线开关（I-7）
 # HW7 改动（v0.9，由 Claude 代 A 添加）：titles = 检索只返回标题等元数据、不计入污点
@@ -74,34 +78,68 @@ class Config:
         )
 
 
+def scopes_from(data: dict) -> set[str]:
+    """The organisation's scopes: data["scopes"] if present, else DEFAULT_SCOPES. Validated."""
+    if "scopes" not in data:
+        return set(DEFAULT_SCOPES)
+    raw = data["scopes"]
+    if not isinstance(raw, list):
+        raise ConfigError("scopes must be a list of names")
+    for name in raw:
+        if not isinstance(name, str) or not SCOPE_NAME.match(name):
+            raise ConfigError(f"invalid scope name {name!r}: use 1-32 lowercase letters, digits, - or _")
+    if "public" not in raw:
+        raise ConfigError("scopes must include public")
+    return set(raw)
+
+
+def load_scopes(path: Path) -> set[str]:
+    """Scopes declared in agents.json; DEFAULT_SCOPES if the file or the list is missing."""
+    if not path.exists():
+        return set(DEFAULT_SCOPES)
+    try:
+        return scopes_from(json.loads(path.read_text(encoding="utf-8")))
+    except (json.JSONDecodeError, TypeError) as e:
+        raise ConfigError(f"{path.name} 格式不对：{e}") from None
+
+
 def load_agents(path: Path) -> list[dict]:
     """读取并校验 agents.json，返回 agent 列表。"""
     if not path.exists():
         raise ConfigError(f"找不到 {path}，请先运行 python3 scripts/gen_keys.py")
     try:
-        agents = json.loads(path.read_text(encoding="utf-8"))["agents"]
+        data = json.loads(path.read_text(encoding="utf-8"))
+        agents = data["agents"]
     except (json.JSONDecodeError, KeyError, TypeError) as e:
         raise ConfigError(f"{path.name} 格式不对：{e}") from None
+    validate_agents(agents, scopes_from(data))
+    return agents
 
+
+def validate_agents(agents: list[dict], scopes: set[str], check_keys: bool = True) -> None:
+    """Check every agent entry against the organisation's scopes. Raises ConfigError."""
     ids, keys = set(), set()
     for a in agents:
         aid = a.get("agent_id")
         key = a.get("key", "")
         if not aid or aid in ids:
             raise ConfigError(f"agent_id 缺失或重复：{aid!r}")
-        if not isinstance(key, str) or key.startswith("<") or len(key) < 16:
+        if check_keys and (not isinstance(key, str) or key.startswith("<") or len(key) < 16):
             raise ConfigError(f"{aid} 的密钥无效，请运行 python3 scripts/gen_keys.py 生成")
-        if key in keys:
+        if check_keys and key in keys:
             raise ConfigError(f"{aid} 的密钥与其他 agent 重复")
         if a.get("level") not in (0, 1, 2, 3) or type(a.get("level")) is not int:
             raise ConfigError(f"{aid} 的 level 必须是 0–3 的整数")
-        if not set(a.get("read_scopes", [])) <= VALID_SCOPES or not a.get("read_scopes"):
+        read = a.get("read_scopes")
+        if not isinstance(read, list) or not read or not all(isinstance(x, str) for x in read):
             raise ConfigError(f"{aid} 的 read_scopes 不合法")
-        if a.get("write_scope") not in VALID_SCOPES:
-            raise ConfigError(f"{aid} 的 write_scope 不合法")
+        unknown = sorted(set(read) - scopes)
+        if unknown:
+            raise ConfigError(f"{aid}: read_scopes not declared in scopes: {unknown}")
+        if a.get("write_scope") not in scopes:
+            raise ConfigError(f"{aid}: write_scope {a.get('write_scope')!r} not declared in scopes")
         ids.add(aid)
         keys.add(key)
-    return agents
 
 
 def find_agent(agents: list[dict], key: Optional[str]) -> Optional[dict]:

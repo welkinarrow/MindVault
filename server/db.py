@@ -5,6 +5,7 @@
 """
 
 import json
+import re
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -12,6 +13,7 @@ from pathlib import Path
 from typing import Iterator, Optional
 
 BLOCK_COLUMNS = ("block_id", "title", "content", "level", "scope", "status", "author")
+SCOPE_CHECK = re.compile(r"\s*CHECK\s*\(\s*scope\s+IN\s*\([^)]*\)\s*\)", re.IGNORECASE)
 
 
 def now_iso() -> str:
@@ -26,7 +28,8 @@ class Store:
         self._upgrade()
 
     def _upgrade(self) -> None:
-        """Bring a database built before the Demo Day schema up to date (sources + agent_taint)."""
+        """Bring a database built before the Demo Day schema up to date (scopes, sources, agent_taint)."""
+        self._drop_scope_check()
         with self._conn() as c:
             cols = {r["name"] for r in c.execute("PRAGMA table_info(blocks)")}
             if "sources" not in cols:
@@ -38,6 +41,29 @@ class Store:
                 " read_block_ids TEXT NOT NULL DEFAULT '[]',"
                 " updated_at TEXT NOT NULL)"
             )
+
+    def _drop_scope_check(self) -> None:
+        """Old databases hardcode the scope list in a CHECK; rebuild blocks without it, keeping every row."""
+        conn = sqlite3.connect(self.db_path, timeout=10, isolation_level=None)
+        try:
+            row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'blocks'").fetchone()
+            if not row or not SCOPE_CHECK.search(row[0]):
+                return
+            new_sql = SCOPE_CHECK.sub("", row[0]).replace("CREATE TABLE blocks", "CREATE TABLE blocks_new", 1)
+            conn.execute("PRAGMA foreign_keys = OFF")  # ratings references blocks; must be set outside a transaction
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute(new_sql)
+            conn.execute("INSERT INTO blocks_new SELECT * FROM blocks")
+            conn.execute("DROP TABLE blocks")
+            conn.execute("ALTER TABLE blocks_new RENAME TO blocks")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_blocks_author ON blocks (author, created_at)")
+            conn.execute("COMMIT")
+        except Exception:
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            raise
+        finally:
+            conn.close()
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:

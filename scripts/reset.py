@@ -23,8 +23,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMA = ROOT / "server" / "schema.sql"
+sys.path.insert(0, str(ROOT))
 
-VALID_SCOPES = {"public", "finance", "hr", "support", "release", "rnd", "mgmt"}
+from server.config import ConfigError, load_scopes  # noqa: E402
 SEED_STATUSES = {"verified", "unverified"}           # 种子数据不允许 quarantined
 REQUIRED_FIELDS = {"block_id", "title", "content", "level", "scope", "status", "author"}
 DEMO_BLOCKS = {"b-101", "b-207", "b-318", "b-412"}   # 演示必需
@@ -37,7 +38,7 @@ def resolve(env_name: str, default: str) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
-def validate(blocks: object) -> list[str]:
+def validate(blocks: object, scopes: set[str]) -> list[str]:
     """按 interfaces.md 第 6.2 节校验，返回全部错误（不在第一个错误处停下）。"""
     if not isinstance(blocks, list) or not blocks:
         return ["种子文件必须是非空的 JSON 数组"]
@@ -70,8 +71,8 @@ def validate(blocks: object) -> list[str]:
         # type() 而非 isinstance()：排除 True/False（bool 是 int 的子类）
         if type(b.get("level")) is not int or not 0 <= b["level"] <= 3:
             errors.append(f"{where}：level 必须是 0–3 的整数，当前为 {b.get('level')!r}")
-        if b.get("scope") not in VALID_SCOPES:
-            errors.append(f"{where}：scope 非法：{b.get('scope')!r}")
+        if b.get("scope") not in scopes:
+            errors.append(f"{where}：scope {b.get('scope')!r} is not declared in agents.json scopes")
         if b.get("status") not in SEED_STATUSES:
             errors.append(f"{where}：status 必须是 verified 或 unverified，当前为 {b.get('status')!r}")
 
@@ -140,7 +141,11 @@ def main() -> None:
     except json.JSONDecodeError as e:
         sys.exit(f"{seed_path.name} 不是合法的 JSON：第 {e.lineno} 行第 {e.colno} 列，{e.msg}")
 
-    errors = validate(blocks)
+    try:
+        scopes = load_scopes(resolve("AGENTS_FILE", "config/agents.json"))
+    except ConfigError as e:
+        sys.exit(f"agents.json: {e}")
+    errors = validate(blocks, scopes)
     if errors:
         print(f"{seed_path.name} 校验失败（{len(errors)} 处），数据库未改动：", file=sys.stderr)
         for e in errors:

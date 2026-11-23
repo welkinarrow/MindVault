@@ -71,3 +71,29 @@ and show the chain in the control room.
 - §4 memory_write output: add `sources` (list of block IDs).
 - §7 Schema: `blocks.sources`, table `agent_taint`.
 - §8 Log format: WRITE line gains `sources=...` at the end.
+
+---
+
+# Part 2 (branch `product-config`, on top of this one): configurable scopes and agent setup
+
+**Problem.** The seven scopes were hardcoded in four places (`schema.sql` CHECK, `config.py`,
+`reset.py`, `gen_keys.py`), so a company couldn't add its own (legal, sales…) without editing
+SQL. Adding an agent meant hand-editing `agents.json` and making up a key.
+
+**Change.**
+- `agents.json` can list `"scopes"` (lowercase names, must include `public`). Without the list,
+  the original seven apply, so existing files keep working unchanged. Agents and seed blocks are
+  checked against it, so a typo like `lgeal` is an error, not a new scope.
+- The scope CHECK is gone from `schema.sql`. Older databases are rebuilt without it on startup;
+  every block and rating is kept (unit test, plus a copy of `data/memory.db`: 12 of 12 blocks kept).
+- New `scripts/agents.py`: `list` (never prints keys), `add-scope`, `add` (generates and prints the
+  key once), `new-key`, `remove`. It validates the whole file before an atomic write, so a bad
+  command leaves the file untouched.
+- Denials for a custom scope say "request it from the legal owner".
+- `config/agents.example.json` now lists the seven scopes explicitly.
+
+**Checks.** 179 tests pass (16 new in `tests/test_org_config.py`). `selftest.py` passes with the
+existing config. Live, with a new config built only through `scripts/agents.py`: `counsel` wrote
+into a new `legal` scope, and `finance` was denied with `SCOPE_MISMATCH`.
+
+**Spec changes if merged:** §6.1 (agents.json gains `scopes`), §7 (no CHECK on `blocks.scope`).

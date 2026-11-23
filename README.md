@@ -48,6 +48,22 @@ Denials and bad input come back as normal tool results with a `reason_code` (for
 | `scripts/` | A, C | `reset.py` (rebuilds the DB from seed data), `verify.py` (checks the behavior rules) |
 | `docs/` | — | Interface contract |
 
+## Agents and scopes
+
+Scopes are listed in `config/agents.json` under `"scopes"` (must include `public`). A file
+without that list uses the original seven. Manage both with `scripts/agents.py` instead of
+editing the file by hand:
+
+```bash
+python scripts/agents.py add-scope legal
+python scripts/agents.py add counsel --level 2 --read public,legal --write legal   # prints the key once
+python scripts/agents.py list          # never prints keys
+python scripts/agents.py new-key counsel
+python scripts/agents.py remove counsel
+```
+
+Restart the service after a change. Older databases are upgraded automatically on startup.
+
 ## Configuration
 
 | Variable | Default | Purpose |

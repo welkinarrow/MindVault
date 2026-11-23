@@ -1,4 +1,13 @@
 {
+  "scopes": [
+    "public",
+    "finance",
+    "hr",
+    "support",
+    "release",
+    "rnd",
+    "mgmt"
+  ],
   "agents": [
     {
       "agent_id": "finance",

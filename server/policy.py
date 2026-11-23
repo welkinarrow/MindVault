@@ -62,7 +62,8 @@ def denial(reason_code: str, block_id: str, block: Optional[dict] = None, lang: 
     if reason_code == "NOT_FOUND" or block is None:
         return result
 
-    owner = SCOPE_OWNERS[lang][block["scope"]]
+    scope = block["scope"]
+    owner = SCOPE_OWNERS[lang].get(scope) or (f"{scope}负责人" if lang == "zh" else f"the {scope} owner")
     if reason_code == "LEVEL_TOO_LOW":
         result["required_level"] = block["level"]
         result["message"] = (

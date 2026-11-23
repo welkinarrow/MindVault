@@ -16,25 +16,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "config" / "agents.example.json"
 OUTPUT = ROOT / "config" / "agents.json"
+sys.path.insert(0, str(ROOT))
 
-VALID_SCOPES = {"public", "finance", "hr", "support", "release", "rnd", "mgmt"}
+from server.config import ConfigError, scopes_from, validate_agents  # noqa: E402
 
 
-def validate(agents: list[dict]) -> None:
-    """按 interfaces.md 第 2、6.1 节检查模板，不合法直接退出。"""
-    seen = set()
-    for a in agents:
-        aid = a.get("agent_id")
-        if not aid or aid in seen:
-            sys.exit(f"agent_id 缺失或重复：{aid!r}")
-        seen.add(aid)
-        if a.get("level") not in (0, 1, 2, 3):
-            sys.exit(f"{aid}: level 必须是 0–3 的整数")
-        scopes = set(a.get("read_scopes", []))
-        if not scopes or not scopes <= VALID_SCOPES:
-            sys.exit(f"{aid}: read_scopes 含非法取值 {scopes - VALID_SCOPES}")
-        if a.get("write_scope") not in VALID_SCOPES:
-            sys.exit(f"{aid}: write_scope 非法")
+def validate(config: dict) -> None:
+    """按 interfaces.md 第 2、6.1 节检查模板（范围以模板里的 scopes 为准），不合法直接退出。"""
+    try:
+        validate_agents(config["agents"], scopes_from(config), check_keys=False)
+    except ConfigError as e:
+        sys.exit(str(e))
 
 
 def main() -> None:
@@ -46,7 +38,7 @@ def main() -> None:
         sys.exit(f"{OUTPUT.relative_to(ROOT)} 已存在。如需重新生成，加 --force（旧密钥会失效）。")
 
     config = json.loads(TEMPLATE.read_text(encoding="utf-8"))
-    validate(config["agents"])
+    validate(config)
 
     for a in config["agents"]:
         a["key"] = secrets.token_hex(16)  # 32 位十六进制
