@@ -16,6 +16,21 @@ BLOCK_COLUMNS = ("block_id", "title", "content", "level", "scope", "status", "au
 SCOPE_CHECK = re.compile(r"\s*CHECK\s*\(\s*scope\s+IN\s*\([^)]*\)\s*\)", re.IGNORECASE)
 
 
+def _derived(conn: sqlite3.Connection, block_id: str) -> list[str]:
+    """Walk blocks.sources downstream from block_id (handles chains and cycles)."""
+    found: list[str] = []
+    frontier = [block_id]
+    while frontier:
+        current = frontier.pop()
+        for (child,) in conn.execute(
+            "SELECT b.block_id FROM blocks b, json_each(b.sources) j WHERE j.value = ?", (current,)
+        ).fetchall():
+            if child != block_id and child not in found:
+                found.append(child)
+                frontier.append(child)
+    return found
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -34,6 +49,15 @@ class Store:
             cols = {r["name"] for r in c.execute("PRAGMA table_info(blocks)")}
             if "sources" not in cols:
                 c.execute("ALTER TABLE blocks ADD COLUMN sources TEXT")
+            if "stale_since" not in cols:
+                c.execute("ALTER TABLE blocks ADD COLUMN stale_since TEXT")
+            c.execute(
+                "CREATE TABLE IF NOT EXISTS block_history ("
+                " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                " block_id TEXT NOT NULL REFERENCES blocks (block_id),"
+                " old_title TEXT NOT NULL, old_content TEXT NOT NULL, old_level INTEGER NOT NULL,"
+                " corrected_by TEXT NOT NULL, reason TEXT NOT NULL, corrected_at TEXT NOT NULL)"
+            )
             c.execute(
                 "CREATE TABLE IF NOT EXISTS agent_taint ("
                 " agent_id TEXT PRIMARY KEY,"
@@ -98,6 +122,53 @@ class Store:
         with self._conn() as c:
             row = c.execute("SELECT sources FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
         return json.loads(row["sources"]) if row and row["sources"] else []
+
+    def derived_from(self, block_id: str) -> list[str]:
+        """Every block built on block_id, directly or through other blocks."""
+        with self._conn() as c:
+            return _derived(c, block_id)
+
+    def stale_ids(self) -> set[str]:
+        """Blocks built on something that has since been corrected."""
+        with self._conn() as c:
+            return {r[0] for r in c.execute("SELECT block_id FROM blocks WHERE stale_since IS NOT NULL")}
+
+    # ------------------------------------------------------------ corrections
+    def apply_correction(self, *, block_id: str, content: str, level: int, corrected_by: str,
+                         reason: str, review_action: str, review_reason: str) -> list[str]:
+        """Replace a block's content (old version goes to block_history), clear its own stale flag,
+        and flag every block derived from it, directly or through other blocks. Returns the flagged IDs.
+        All in one transaction: either everything changes or nothing does."""
+        conn = sqlite3.connect(self.db_path, timeout=10, isolation_level=None)
+        try:
+            conn.execute("PRAGMA foreign_keys = ON")
+            conn.execute("BEGIN IMMEDIATE")
+            now = now_iso()
+            old = conn.execute("SELECT title, content, level FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
+            if old is None:
+                raise KeyError(block_id)
+            conn.execute(
+                "INSERT INTO block_history (block_id, old_title, old_content, old_level, corrected_by, reason, "
+                "corrected_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (block_id, old[0], old[1], old[2], corrected_by, reason, now),
+            )
+            conn.execute(
+                "UPDATE blocks SET content = ?, level = ?, status = 'unverified', review_action = ?, "
+                "review_reason = ?, stale_since = NULL WHERE block_id = ?",
+                (content, level, review_action, review_reason, block_id),
+            )
+            flagged = _derived(conn, block_id)
+            if flagged:
+                conn.executemany("UPDATE blocks SET stale_since = ? WHERE block_id = ?",
+                                 [(now, b) for b in flagged])
+            conn.execute("COMMIT")
+            return flagged
+        except Exception:
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            raise
+        finally:
+            conn.close()
 
     # ------------------------------------------------------------ taint
     def get_taint(self, agent_id: str) -> tuple[int, list[str]]:

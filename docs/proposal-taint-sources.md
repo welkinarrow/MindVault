@@ -138,3 +138,29 @@ New `scripts/connect.py <agent>` prints the setup for Claude Code, Codex and Cur
 not tested; it isn't installed here). 5 new tests in `tests/test_connect.py`.
 This also covers "two client stacks, both Anthropic" from the HW9 still-unproven list: Codex
 ran on OpenAI's side.
+
+---
+
+# Part 5 (branch `product-correct`, on top of part 4): correct a block, flag everything built on it
+
+New MCP tool `memory_correct(block_id, content, reason)`:
+- **Who:** an agent that can read the block and whose `write_scope` is the block's scope (a
+  department fixes its own records). Otherwise `NOT_FOUND`, `LEVEL_TOO_LOW` or `SCOPE_MISMATCH`.
+- **Review:** the new content goes through `review()`. Only `pass` applies it; `quarantine` or
+  `reject` changes nothing.
+- **Label:** the new level is max(old level, the agent's taint). It never goes down.
+- **History:** the replaced version goes to `block_history` (who, why, when).
+- **Flags:** every block whose `sources` lead back to the corrected one, directly or through other
+  blocks, gets `stale_since`. Readers see `stale: true` and a notice that does not say which
+  source changed (it may be above their level). Correcting a stale block clears its flag.
+
+**Found live and fixed:** the first live correction was quarantined. The reviewer's context
+included the summary built on the old figure, which of course "contradicted" the fix. The
+reviewer now never sees the corrected block or anything built on it. The test for this fails
+without the fix.
+
+**Live run (Claude Code, finance):** wrote w-0001 from b-101 (4.8%) → corrected b-101 to 3.9%
+(applied, L2, flagged w-0001, old version in history) → read w-0001: `stale: true` plus the
+notice. The agent then planned on its own to re-read the sources and correct w-0001.
+
+15 new tests in `tests/test_correct.py`; 203 pass.

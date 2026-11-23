@@ -53,6 +53,17 @@ def can_read(agent: dict, block: dict) -> Optional[str]:
     return None
 
 
+def can_correct(agent: dict, block: dict) -> Optional[str]:
+    """An agent may correct a block it can read that belongs to its own department (its write scope).
+    Returns None if allowed, else a reason code."""
+    code = can_read(agent, block)
+    if code is not None:
+        return code
+    if block["scope"] != agent["write_scope"]:
+        return "SCOPE_MISMATCH"
+    return None
+
+
 def denial(reason_code: str, block_id: str, block: Optional[dict] = None, lang: str = "zh") -> dict:
     """生成按 block_id 读取被拒时返回给 agent 的 JSON（interfaces.md 第 4.2 节）。
 

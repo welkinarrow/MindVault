@@ -57,6 +57,9 @@ DESCRIPTIONS = {
                       "写入会先经过审核，返回结果中包含审核结论。",
         "rate": "任务结束后，给本次任务中读过、并在回答里引用过的 block 打分。只评准确性（1–5 分），每条必须写依据。"
                 "只能给本次会话读过的 block 打分，否则会被拒收。",
+        "correct": "更正一条有误的 block：传入 block_id、完整的更正后 content 和简短的 reason。"
+                   "只能更正你有权读取、且属于你自己范围的 block。更正会先经过审核；通过后旧版本保存在历史中，"
+                   "所有依据这条 block 写成的内容都会被标记为待复核。",
     },
     "en": {
         "read": "Search the company's shared memory. Pass 2-6 keywords separated by spaces in `query`, "
@@ -79,6 +82,10 @@ DESCRIPTIONS = {
         "rate": "At the end of the task, rate the blocks you read in this task and cited in your answer. "
                 "Rate accuracy only (1-5) and give a reason for every score. You can only rate blocks you "
                 "read in this session; other ratings will be rejected.",
+        "correct": "Correct a block that is wrong: give its `block_id`, the full corrected `content`, and a "
+                   "short `reason`. You can only correct blocks you can read that belong to your own scope. "
+                   "The correction is reviewed first; if it passes, the old version is kept in history and "
+                   "every block built on this one is flagged as stale so other agents re-check it.",
     },
 }
 
@@ -148,6 +155,10 @@ def build_server(cfg: Config, agents: list[dict], service: MemoryService) -> MCP
         @mcp.tool(name="memory_write", description=texts["write"])
         async def memory_write(title: str, content: str) -> dict[str, Any]:
             return await call(service.write, title, content)
+
+    @mcp.tool(name="memory_correct", description=texts["correct"])
+    async def memory_correct(block_id: str, content: str, reason: str) -> dict[str, Any]:
+        return await call(service.correct, block_id, content, reason)
 
     @mcp.tool(name="memory_rate", description=texts["rate"])
     async def memory_rate(ratings: list[RatingItem]) -> dict[str, Any]:

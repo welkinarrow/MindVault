@@ -12,7 +12,20 @@ CREATE TABLE blocks (
     review_action TEXT CHECK (review_action IS NULL OR review_action IN ('pass', 'quarantine')),
     review_reason TEXT,
     created_at    TEXT NOT NULL,          -- ISO 8601，UTC
-    sources       TEXT                    -- JSON list of block_ids the author read before writing; NULL for seed
+    sources       TEXT,                   -- JSON list of block_ids the author read before writing; NULL for seed
+    stale_since   TEXT                    -- set when a block this was built from is corrected; NULL = fine
+);
+
+-- Every correction keeps the version it replaced.
+CREATE TABLE IF NOT EXISTS block_history (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    block_id      TEXT NOT NULL REFERENCES blocks (block_id),
+    old_title     TEXT NOT NULL,
+    old_content   TEXT NOT NULL,
+    old_level     INTEGER NOT NULL,
+    corrected_by  TEXT NOT NULL,
+    reason        TEXT NOT NULL,
+    corrected_at  TEXT NOT NULL
 );
 
 CREATE TABLE ratings (

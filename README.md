@@ -33,6 +33,7 @@ Agents read and write a common pool of memory "blocks" through three MCP tools. 
 | `memory_read` | Keyword search (`query`) or direct lookup (`block_id`) |
 | `memory_write` | Save a task conclusion (`title`, `content`); returns the review result |
 | `memory_rate` | Rate the accuracy of blocks read in this session |
+| `memory_correct` | Fix a block in your own scope (`block_id`, `content`, `reason`). Reviewed first; the old version is kept, and every block built on it is flagged `stale` for readers |
 
 Denials and bad input come back as normal tool results with a `reason_code` (for example `LEVEL_TOO_LOW` or `SCOPE_MISMATCH`), not as protocol errors. Inputs, outputs, and error codes are specified in [interfaces_en.md §4](docs/interfaces_en.md).
 
