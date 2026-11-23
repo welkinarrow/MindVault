@@ -4,6 +4,7 @@
 多线程共用连接的问题，也不需要处理连接断开后的重连。
 """
 
+import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -22,6 +23,21 @@ class Store:
         if not Path(db_path).exists():
             raise FileNotFoundError(f"找不到数据库 {db_path}，请先运行 python3 scripts/reset.py")
         self.db_path = Path(db_path)
+        self._upgrade()
+
+    def _upgrade(self) -> None:
+        """Bring a database built before the Demo Day schema up to date (sources + agent_taint)."""
+        with self._conn() as c:
+            cols = {r["name"] for r in c.execute("PRAGMA table_info(blocks)")}
+            if "sources" not in cols:
+                c.execute("ALTER TABLE blocks ADD COLUMN sources TEXT")
+            c.execute(
+                "CREATE TABLE IF NOT EXISTS agent_taint ("
+                " agent_id TEXT PRIMARY KEY,"
+                " max_level_read INTEGER NOT NULL DEFAULT 0 CHECK (max_level_read BETWEEN 0 AND 3),"
+                " read_block_ids TEXT NOT NULL DEFAULT '[]',"
+                " updated_at TEXT NOT NULL)"
+            )
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
@@ -51,6 +67,52 @@ class Store:
             row = c.execute(f"SELECT {cols} FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
         return dict(row) if row else None
 
+    def get_sources(self, block_id: str) -> list[str]:
+        """Blocks the author had read before writing block_id. Seed blocks have none."""
+        with self._conn() as c:
+            row = c.execute("SELECT sources FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
+        return json.loads(row["sources"]) if row and row["sources"] else []
+
+    # ------------------------------------------------------------ taint
+    def get_taint(self, agent_id: str) -> tuple[int, list[str]]:
+        """(highest level read, block_ids read in first-read order) since the last reset."""
+        with self._conn() as c:
+            row = c.execute(
+                "SELECT max_level_read, read_block_ids FROM agent_taint WHERE agent_id = ?", (agent_id,)
+            ).fetchone()
+        return (row["max_level_read"], json.loads(row["read_block_ids"])) if row else (0, [])
+
+    def add_taint(self, agent_id: str, block_id: str, level: int) -> None:
+        """Record a successful read. Level only goes up; a block is listed once."""
+        conn = sqlite3.connect(self.db_path, timeout=10, isolation_level=None)
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT max_level_read, read_block_ids FROM agent_taint WHERE agent_id = ?", (agent_id,)
+            ).fetchone()
+            current, ids = (row[0], json.loads(row[1])) if row else (0, [])
+            if block_id not in ids:
+                ids.append(block_id)
+            conn.execute(
+                "INSERT INTO agent_taint (agent_id, max_level_read, read_block_ids, updated_at) "
+                "VALUES (?, ?, ?, ?) ON CONFLICT (agent_id) DO UPDATE SET "
+                "max_level_read = excluded.max_level_read, read_block_ids = excluded.read_block_ids, "
+                "updated_at = excluded.updated_at",
+                (agent_id, max(current, level), json.dumps(ids), now_iso()),
+            )
+            conn.execute("COMMIT")
+        except Exception:
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            raise
+        finally:
+            conn.close()
+
+    def reset_taint(self, agent_id: str) -> None:
+        """Admin/orchestrator only: the agent starts a task with a clean context."""
+        with self._conn() as c:
+            c.execute("DELETE FROM agent_taint WHERE agent_id = ?", (agent_id,))
+
     # ------------------------------------------------------------ 写入
 
     def insert_written_block(
@@ -64,6 +126,7 @@ class Store:
         author: str,
         review_action: str,
         review_reason: str,
+        sources: Optional[list[str]] = None,
     ) -> str:
         """写入一个 agent 产生的 block，返回新 ID（w-0001、w-0002……）。
 
@@ -79,9 +142,9 @@ class Store:
             block_id = f"w-{(row[0] or 0) + 1:04d}"
             conn.execute(
                 "INSERT INTO blocks (block_id, title, content, level, scope, status, author, "
-                "review_action, review_reason, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "review_action, review_reason, created_at, sources) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (block_id, title, content, level, scope, status, author,
-                 review_action, review_reason, now_iso()),
+                 review_action, review_reason, now_iso(), json.dumps(sources or [])),
             )
             conn.execute("COMMIT")
             return block_id

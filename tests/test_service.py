@@ -289,11 +289,13 @@ class TestSessionTimeout(ServiceTestCase):
         self.assertEqual(self.svc.write("finance", "t", "c")["level"], 2)
 
     def test_new_session_after_idle(self):
+        # Idle starts a new session (ratings need a fresh read) but no longer lowers taint:
+        # the agent may still hold b-101 in its context. See tests/test_taint_sources.py.
         self.svc.read("finance", block_id="b-101")
         self.clock.now += 1801
         with self.assertLogs("memory", level="INFO") as cm:
             r = self.svc.write("finance", "t", "c")
-        self.assertEqual(r["level"], 0)
+        self.assertEqual(r["level"], 2)
         self.assertTrue(any("[SESSION]" in line for line in cm.output))
 
     def test_activity_extends_session(self):

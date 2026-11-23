@@ -11,7 +11,8 @@ CREATE TABLE blocks (
     author        TEXT NOT NULL,          -- 种子数据为 'seed'，写入为 agent_id
     review_action TEXT CHECK (review_action IS NULL OR review_action IN ('pass', 'quarantine')),
     review_reason TEXT,
-    created_at    TEXT NOT NULL           -- ISO 8601，UTC
+    created_at    TEXT NOT NULL,          -- ISO 8601，UTC
+    sources       TEXT                    -- JSON list of block_ids the author read before writing; NULL for seed
 );
 
 CREATE TABLE ratings (
@@ -26,3 +27,12 @@ CREATE TABLE ratings (
 );
 
 CREATE INDEX idx_blocks_author ON blocks (author, created_at);
+
+-- Per-agent taint, kept across idle time and service restarts.
+-- Cleared only by scripts/reset.py (rebuilds the DB) or scripts/reset_taint.py (admin).
+CREATE TABLE IF NOT EXISTS agent_taint (
+    agent_id       TEXT PRIMARY KEY,
+    max_level_read INTEGER NOT NULL DEFAULT 0 CHECK (max_level_read BETWEEN 0 AND 3),
+    read_block_ids TEXT NOT NULL DEFAULT '[]',  -- JSON list, in first-read order
+    updated_at     TEXT NOT NULL
+);

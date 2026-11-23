@@ -151,13 +151,14 @@ class MemoryService:
                 out.append(_pick(block, PREVIEW_FIELDS))
             else:
                 self.sessions.record_read(session, block)
+                self.store.add_taint(aid, block["block_id"], block["level"])
                 _event("READ", aid, block["block_id"], _label(block), "ALLOW")
                 self._read_event(aid, session, block, "ALLOW", None, via="query", query=query)
                 out.append(_pick(block, PUBLIC_FIELDS))
         self.events.emit("SEARCH", agent=aid, result=f"{len(out)} returned", session=session.session_id,
                          query=query, returned=[b["block_id"] for b in out],
                          filtered=[b["block_id"] for b, _ in result.filtered],
-                         taint_after=self.sessions.max_level(session), search_mode=self.search_mode)
+                         taint_after=self.store.get_taint(aid)[0], search_mode=self.search_mode)
         if preview:
             return {"results": out, "search_notice": self.t["preview_notice"]}
         return {"results": out, "data_notice": self.t["data_notice"]}
@@ -184,6 +185,7 @@ class MemoryService:
             return denial(code, block_id, block, lang=self.lang)
 
         self.sessions.record_read(session, block)
+        self.store.add_taint(agent["agent_id"], block_id, block["level"])
         _event("READ", agent["agent_id"], block_id, _label(block), "ALLOW")
         self._read_event(agent["agent_id"], session, block, "ALLOW", None, via="id")
         return {"results": [_pick(block, PUBLIC_FIELDS)], "data_notice": self.t["data_notice"]}
@@ -202,7 +204,9 @@ class MemoryService:
 
         # taint 模式：级别和范围只由会话和 agent 决定，与内容无关
         # self 模式（基线）：级别由 agent 声明；同时记下污点会给出的级别，便于对比
-        taint_level = self.sessions.max_level(session)
+        # Taint is kept per agent in the database, so idle time or a service restart cannot
+        # lower it while the agent may still hold what it read. Only an admin reset clears it.
+        taint_level, sources = self.store.get_taint(agent_id)
         requested = level
         level, scope = label_for_write(agent, taint_level, self.label_mode, requested)
         basis = "session_max_read" if self.label_mode == "taint" else "agent_declared"
@@ -221,13 +225,14 @@ class MemoryService:
         action, reason = check_review_action(raw, lang=self.lang)
 
         result = {"block_id": None, "level": level, "scope": scope,
-                  "level_basis": basis, "status": None,
+                  "level_basis": basis, "status": None, "sources": sources,
                   "review": {"action": action, "reason": reason}}
 
         write_fields = dict(agent=agent_id, level=level, scope=scope, session=session.session_id,
                             level_basis=basis, taint_level=taint_level,
                             requested_level=requested if self.label_mode == "self" else None,
-                            title=title, context_blocks=[b["block_id"] for b in context])
+                            title=title, context_blocks=[b["block_id"] for b in context],
+                            sources=sources)
 
         if action == "reject":
             _event("WRITE", agent_id, "-> (rejected)", level_text, f"scope={scope}")
@@ -240,9 +245,10 @@ class MemoryService:
         status = "unverified" if action == "pass" else "quarantined"
         new_id = self.store.insert_written_block(
             title=title, content=content, level=level, scope=scope, status=status,
-            author=agent_id, review_action=action, review_reason=reason,
+            author=agent_id, review_action=action, review_reason=reason, sources=sources,
         )
-        _event("WRITE", agent_id, f"-> {new_id}", level_text, f"scope={scope}")
+        _event("WRITE", agent_id, f"-> {new_id}", level_text, f"scope={scope}",
+               f"sources={','.join(sources) or '-'}")
         _event("REVIEW", new_id, action, f'"{reason}"')
         self.events.emit("WRITE", block=new_id, result=status, **write_fields)
         self.events.emit("REVIEW", agent=agent_id, block=new_id, level=level, scope=scope,
