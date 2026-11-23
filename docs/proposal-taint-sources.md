@@ -97,3 +97,24 @@ existing config. Live, with a new config built only through `scripts/agents.py`:
 into a new `legal` scope, and `finance` was denied with `SCOPE_MISMATCH`.
 
 **Spec changes if merged:** §6.1 (agents.json gains `scopes`), §7 (no CHECK on `blocks.scope`).
+
+---
+
+# Part 3 (branch `product-install`, on top of part 2): one-command install and Docker
+
+- `./install.sh` finds a Python 3.10+ (macOS's `python3` is 3.9; falls back to `uv` if present),
+  creates `.venv`, installs requirements, creates `.env` from `.env.example`, then runs
+  `scripts/init.py`. `./install.sh --demo` uses the demo agents and seed data.
+- `scripts/init.py` creates only what is missing: `agents.json` (one `assistant` agent, or the
+  demo agents) and the memory (`reset.py --empty`, new, or the demo seed). Keys are printed
+  once. It never replaces an existing config or memory.
+- `./run.sh` loads `.env` and starts the service, and warns if the reviewer's key is missing.
+- `Dockerfile` + `docker-compose.yml`: Python 3.12 slim, non-root user, agents/keys/memory in
+  the `mindvault-data` volume, port bound to localhost by default. `MINDVAULT_INIT_ARGS=--demo`
+  for demo data.
+
+**Checked:** fresh clone → `./install.sh` → `./run.sh` with a clean environment → a live write
+(reviewed, stored as L0/public) and a read. Rerunning `install.sh` changes nothing. The image's
+exact files and start command were run outside Docker (`--demo`), and `selftest.py` passed.
+**Not checked: `docker build` itself.** Docker isn't installed on the machine this was built on.
+4 new tests in `tests/test_install.py`.

@@ -1,0 +1,15 @@
+.git
+.venv
+venv
+.env
+config/agents.json
+data/memory.db
+logs
+bench
+hw8
+docs
+frontend
+tests
+**/__pycache__
+*.pyc
+.DS_Store

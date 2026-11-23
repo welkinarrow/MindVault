@@ -48,6 +48,30 @@ Denials and bad input come back as normal tool results with a `reason_code` (for
 | `scripts/` | A, C | `reset.py` (rebuilds the DB from seed data), `verify.py` (checks the behavior rules) |
 | `docs/` | — | Interface contract |
 
+## Quick start
+
+**On your machine** (macOS or Linux, Python 3.10+):
+
+```bash
+./install.sh        # creates .venv, installs, makes .env, one "assistant" agent and an empty memory
+# put LLM_API_KEY and LLM_MODEL in .env (the write reviewer uses them)
+./run.sh            # starts the service on http://127.0.0.1:8000/mcp
+```
+
+`./install.sh --demo` sets up the demo agents and seed data instead. Running it again only
+creates what is missing; it never replaces your agents or memory.
+
+**With Docker:**
+
+```bash
+cp .env.example .env      # then set LLM_API_KEY and LLM_MODEL
+docker compose up -d
+docker compose logs mindvault                              # first start prints the agent keys
+docker compose exec mindvault python scripts/agents.py list
+```
+
+Agents, keys and memory live in the `mindvault-data` volume.
+
 ## Agents and scopes
 
 Scopes are listed in `config/agents.json` under `"scopes"` (must include `public`). A file

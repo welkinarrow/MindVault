@@ -129,10 +129,16 @@ def summarize(blocks: list[dict]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="只校验种子数据，不改动数据库")
+    parser.add_argument("--empty", action="store_true", help="create an empty memory (no seed data)")
     args = parser.parse_args()
 
     seed_path = resolve("SEED_FILE", "data/seed_blocks.json")
     db_path = resolve("MEMORY_DB", "data/memory.db")
+
+    if args.empty:
+        rebuild(db_path, [])
+        print(f"created an empty memory at {db_path}")
+        return
 
     try:
         blocks = json.loads(seed_path.read_text(encoding="utf-8"))

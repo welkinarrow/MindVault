@@ -1,0 +1,19 @@
+# docker compose up -d     then: docker compose logs mindvault   (first start prints the agent keys)
+# Manage agents:           docker compose exec mindvault python scripts/agents.py list
+services:
+  mindvault:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"   # local only; change to "8000:8000" to expose it to your network
+    env_file: .env
+    environment:
+      MEMORY_HOST: 0.0.0.0      # inside the container; overrides .env
+      MEMORY_DB: /data/memory.db
+      AGENTS_FILE: /data/agents.json
+      # MINDVAULT_INIT_ARGS: --demo
+    volumes:
+      - mindvault-data:/data
+    restart: unless-stopped
+
+volumes:
+  mindvault-data:
