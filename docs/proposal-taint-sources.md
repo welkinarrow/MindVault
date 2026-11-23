@@ -118,3 +118,23 @@ into a new `legal` scope, and `finance` was denied with `SCOPE_MISMATCH`.
 exact files and start command were run outside Docker (`--demo`), and `selftest.py` passed.
 **Not checked: `docker build` itself.** Docker isn't installed on the machine this was built on.
 4 new tests in `tests/test_install.py`.
+
+---
+
+# Part 4 (branch `product-mcp-clients`, on top of part 3): standard MCP clients
+
+In HW9 the cold agents wrote their own HTTP clients. This checks MindVault as a normal MCP server.
+
+| Client | How it connected | What happened |
+| --- | --- | --- |
+| Claude Code 2.1.101 (`claude -p`, `--mcp-config` with a Bearer header) | as `finance` | Searched, read 5 blocks, wrote w-0001 (L2/finance, sources b-101,b-103,b-318,b-207,b-208, review pass), rated all 5 |
+| Claude Code, same setup | as `intern` | Asked for w-0001, got `LEVEL_TOO_LOW` and explained it |
+| Codex 0.155.1 (`codex exec`, OpenAI's agent) | as `hr` | Read b-318, b-319, b-501, wrote w-0002 (L1/hr, sources b-318,b-319,b-501, review pass) |
+
+No server change was needed. Codex needs `default_tools_approval_mode = "approve"` on the
+server entry; without it every call fails with "MCP tool call requires approval".
+
+New `scripts/connect.py <agent>` prints the setup for Claude Code, Codex and Cursor (Cursor is
+not tested; it isn't installed here). 5 new tests in `tests/test_connect.py`.
+This also covers "two client stacks, both Anthropic" from the HW9 still-unproven list: Codex
+ran on OpenAI's side.

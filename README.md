@@ -72,6 +72,19 @@ docker compose exec mindvault python scripts/agents.py list
 
 Agents, keys and memory live in the `mindvault-data` volume.
 
+## Connect an agent
+
+MindVault is a standard MCP server (streamable HTTP, Bearer key). Print the setup for an agent:
+
+```bash
+.venv/bin/python scripts/connect.py assistant          # Claude Code, Codex and Cursor
+.venv/bin/python scripts/connect.py assistant --client codex --url https://your-host/mcp
+```
+
+Claude Code and Codex are tested end to end (read, write, rate, and a lower-level agent being
+denied). Codex needs `default_tools_approval_mode = "approve"`, which the printed block includes;
+without it, `codex exec` refuses every MindVault call. Cursor's config is printed but not tested yet.
+
 ## Agents and scopes
 
 Scopes are listed in `config/agents.json` under `"scopes"` (must include `public`). A file
