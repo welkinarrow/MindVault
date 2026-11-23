@@ -227,6 +227,7 @@ h2 { font-size: 13px; font-weight: 600; letter-spacing: .02em; margin: 0; }
 .k-SEARCH { background: #94a3b8; }
 .k-WRITE { background: var(--write); }
 .k-REVIEW { background: var(--review); }
+.k-CORRECT { background: var(--filter); }
 .k-RATE { background: var(--rate); }
 .k-SESSION, .k-START { background: var(--line2); color: var(--text); }
 .k-LEAK { background: var(--deny); color: #fff; }
@@ -294,3 +295,13 @@ h2 { font-size: 13px; font-weight: 600; letter-spacing: .02em; margin: 0; }
 .drawer .sec h4 { margin: 0 0 6px; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
 .drawer .who-can { display: grid; gap: 4px; font-size: 12.5px; }
 .drawer .ok { color: var(--allow); } .drawer .no { color: var(--deny); }
+
+/* lineage: corrections and stale flags */
+.badge.stale { color: #0a0a0b; background: var(--filter); border-color: var(--filter); font-weight: 700; }
+.badge.corrected { color: var(--write); border-color: rgba(96,165,250,.45); }
+.card.stale { box-shadow: 0 0 0 1px var(--filter), 0 0 18px rgba(251,191,36,.18); }
+.lin-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.lin-row > .hint:first-child { width: 72px; }
+.lin { font-family: var(--mono); font-size: 11px; background: var(--panel2); border: 1px solid var(--line2); border-radius: 6px; padding: 1px 7px; }
+.lin.stale { border-color: var(--filter); color: var(--filter); }
+.stale-note { color: var(--filter); margin-bottom: 4px; }

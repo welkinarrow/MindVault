@@ -164,3 +164,22 @@ without the fix.
 notice. The agent then planned on its own to re-read the sources and correct w-0001.
 
 15 new tests in `tests/test_correct.py`; 203 pass.
+
+---
+
+# Part 6 (branch `product-lineage`, on top of part 5): lineage in the control room
+
+Joyce, this touches your `frontend/static/app.js` and `style.css`; everything is additive.
+`frontend/server.py` is unchanged (`/api/blocks` already returns `sources` and `stale_since`).
+
+- WRITE lines now say "Built from: b-101, …".
+- New CORRECT handler: the corrected block gets a `corrected` badge; amber beams run from it to
+  each flagged block, which gets a `STALE` badge and an amber glow. Refused or not-applied
+  corrections show as a red line with the reason.
+- The block drawer has a Lineage section: the stale warning, *built from* and *used by*, each
+  a clickable chip that opens that block.
+- Because taint now persists, the SESSION line says the taint carries over instead of "starts at L0".
+
+**Checked live** (service + control room, Claude Code as finance): wrote w-0001, corrected b-101
+→ b-101 showed `corrected`, w-0001 turned STALE with the beam, and the drawers showed the
+lineage both ways. No console errors.

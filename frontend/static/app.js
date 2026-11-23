@@ -44,13 +44,22 @@ function canRead(agent, b) {
   if (b.status === "quarantined") return false;
   return b.level <= agent.level && (agent.read_scopes || []).includes(b.scope);
 }
+// Lineage (sources, corrections, stale flags). Blocks from the database store sources as a JSON string.
+function normBlock(b) {
+  let sources = b.sources;
+  if (typeof sources === "string") { try { sources = JSON.parse(sources); } catch { sources = []; } }
+  return { ...b, ratings: [...(b.ratings || [])], sources: Array.isArray(sources) ? sources : [],
+           stale: b.stale ?? Boolean(b.stale_since) };
+}
+function usedBy(id) { return [...S.blocks.values()].filter((b) => (b.sources || []).includes(id)).map((b) => b.block_id); }
+
 function ast(id) {
   return (S.agentState[id] ||= { session: null, taint: 0, reads: 0, blocked: 0, writes: 0, last: "" });
 }
 
 function resetRun(baseBlocks) {
   S.base = baseBlocks ?? S.base;
-  S.blocks = new Map(S.base.map((b) => [b.block_id, { ...b, ratings: [...(b.ratings || [])] }]));
+  S.blocks = new Map(S.base.map((b) => [b.block_id, normBlock(b)]));
   S.agentState = {};
   S.sessions = {};
   S.writes = {};
@@ -83,10 +92,10 @@ function apply(e, anim) {
     }
     case "SESSION": {
       const st = ast(a);
-      st.session = e.session; st.taint = 0;
-      S.sessions[e.session] = { agent: a, points: [{ t: Date.parse(e.time), level: 0 }] };
+      st.session = e.session;
+      S.sessions[e.session] = { agent: a, points: [{ t: Date.parse(e.time), level: st.taint }] };
       st.last = "new session";
-      pushEv(e, "SESSION", a, `New session <code>${esc(e.session)}</code>. Taint starts at <b>L0</b>.`);
+      pushEv(e, "SESSION", a, `New session <code>${esc(e.session)}</code>. Taint carries over: <b>L${st.taint}</b> (only an admin reset clears it).`);
       break;
     }
     case "READ": onRead(e, anim); break;
@@ -94,6 +103,7 @@ function apply(e, anim) {
     case "WRITE": onWrite(e, anim); break;
     case "REVIEW": onReview(e, anim); break;
     case "RATE": onRate(e, anim); break;
+    case "CORRECT": onCorrect(e, anim); break;
     default: pushEv(e, e.event, a, esc(JSON.stringify(e)));
   }
   if (S.labelMode === null && e.label_mode) S.labelMode = e.label_mode;
@@ -196,13 +206,15 @@ function onWrite(e, anim) {
       ...(prev || {}), block_id: e.block, title: e.title || prev?.title || "(written block)",
       content: prev?.content || "", level: e.level, scope: e.scope, status: e.result, author: a,
       written: true, under, taint_level: e.taint_level, ratings: prev?.ratings || [],
+      sources: e.sources || prev?.sources || [], stale: false,
     });
     st.last = `wrote ${e.block}`;
     if (anim) { renderBoard(); flash(e.block, "hit-write"); beam(a, e.block, "var(--write)"); }
     pushEv(e, "WRITE", a,
       `Wrote <code>${esc(e.block)}</code> <span class="badge">L${e.level}/${esc(e.scope)}</span> “${esc(e.title || "")}”`,
       basis + (under ? ` <b style="color:var(--filter)">Under-labelled by ${e.taint_level - e.level}.</b>` : "") +
-      (e.context_blocks?.length ? ` Reviewer context: ${e.context_blocks.map(esc).join(", ")}.` : ""),
+      (e.context_blocks?.length ? ` Reviewer context: ${e.context_blocks.map(esc).join(", ")}.` : "") +
+      (e.sources?.length ? ` Built from: ${e.sources.map((x) => `<code>${esc(x)}</code>`).join(", ")}.` : ""),
       under ? "warn" : "");
   } else {
     st.last = "write rejected";
@@ -233,6 +245,28 @@ function onRate(e, anim) {
     pushEv(e, "RATE", a, `Rating for <code>${esc(e.block)}</code> <b>rejected</b>`,
       `<code>${esc(e.reason_code)}</code>: ${esc(REASONS[e.reason_code] || "")}. Only blocks actually read can be rated.`, "warn");
   }
+}
+
+function onCorrect(e, anim) {
+  const a = e.agent, b = S.blocks.get(e.block);
+  if (e.result !== "APPLIED") {
+    const why = e.result === "DENY" ? `<code>${esc(e.reason_code)}</code>: ${esc(REASONS[e.reason_code] || "")}` : esc(e.reason || "");
+    if (anim) { flash(e.block, "hit-deny"); beam(a, e.block, "var(--deny)"); }
+    pushEv(e, "CORRECT", a, `Correction to <code>${esc(e.block)}</code> <b>not applied</b>`, why, "warn");
+    return;
+  }
+  if (b) Object.assign(b, { level: e.level ?? b.level, status: "unverified", corrected: true, stale: false, content: b.content });
+  for (const id of e.flagged || []) { const d = S.blocks.get(id); if (d) d.stale = true; }
+  ast(a).last = `corrected ${e.block}`;
+  if (anim) {
+    renderBoard();
+    flash(e.block, "hit-write"); beam(a, e.block, "var(--write)");
+    (e.flagged || []).forEach((id, i) => setTimeout(() => { link(e.block, id, "var(--filter)"); flash(id, "hit-filter"); }, 500 + i * 250));
+    if (S.mode === "live") hydrateCorrected(e.block);
+  }
+  const n = (e.flagged || []).length;
+  pushEv(e, "CORRECT", a, `Corrected <code>${esc(e.block)}</code> → ${n ? `flagged ${e.flagged.map((x) => `<code>${esc(x)}</code>`).join(", ")} as stale` : "nothing was built on it"}`,
+    `${esc(e.reason || "")}${n ? " Readers of those blocks now get a re-check warning." : ""}`, n ? "warn" : "");
 }
 
 // ------------------------------------------------------------------ stream items
@@ -311,7 +345,7 @@ function renderBoard() {
 
 function cardHTML(b, viewer) {
   const locked = viewer && !canRead(viewer, b);
-  const cls = ["card", b.status, b.written ? "written" : "", locked ? "locked" : ""].join(" ");
+  const cls = ["card", b.status, b.written ? "written" : "", locked ? "locked" : "", b.stale ? "stale" : ""].join(" ");
   return `<div class="${cls}" data-id="${esc(b.block_id)}" data-l="${b.level}" title="${esc(b.title)}">
     <div class="id"><span>${esc(b.block_id)}</span><span style="color:var(--dim)">${esc(b.scope)}</span></div>
     <div class="t">${esc(b.title)}</div>
@@ -322,6 +356,8 @@ function badgesHTML(b) {
   const out = [];
   if (b.status === "unverified") out.push(`<span class="badge">unverified</span>`);
   if (b.written && b.review_action) out.push(`<span class="badge ${esc(b.review_action)}">${esc(b.review_action)}</span>`);
+  if (b.stale) out.push(`<span class="badge stale" title="A block this was built from has been corrected">STALE</span>`);
+  if (b.corrected) out.push(`<span class="badge corrected">corrected</span>`);
   if (b.under) out.push(`<span class="badge under" title="Taint would have labelled it L${b.taint_level}">UNDER L${b.taint_level}→L${b.level}</span>`);
   if (b.ratings?.length) {
     const avg = b.ratings.reduce((s, r) => s + Number(r.accuracy || 0), 0) / b.ratings.length;
@@ -427,6 +463,29 @@ function beam(agentId, blockId, color) {
   setTimeout(() => p.remove(), 1700);
 }
 
+function link(fromId, toId, color) {
+  const svg = $("#beams"), vault = $(".vault");
+  const from = $(`.card[data-id="${CSS.escape(fromId || "")}"]`), to = $(`.card[data-id="${CSS.escape(toId || "")}"]`);
+  if (!from || !to) return;
+  const vr = vault.getBoundingClientRect(), fr = from.getBoundingClientRect(), tr = to.getBoundingClientRect();
+  const x1 = fr.left + fr.width / 2 - vr.left, y1 = fr.bottom - vr.top;
+  const x2 = tr.left + tr.width / 2 - vr.left, y2 = tr.top - vr.top;
+  const my = (y1 + y2) / 2;
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  p.setAttribute("d", `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`);
+  p.setAttribute("class", "beam");
+  p.setAttribute("stroke", color);
+  svg.append(p);
+  setTimeout(() => p.remove(), 2600);
+}
+
+async function hydrateCorrected(id) {
+  const r = await (await fetch("/api/blocks")).json();
+  const fresh = r.blocks.find((b) => b.block_id === id);
+  const cur = S.blocks.get(id);
+  if (fresh && cur) { cur.content = fresh.content; cur.level = fresh.level; }
+}
+
 // ------------------------------------------------------------------ drawer
 
 function openDrawer(id) {
@@ -445,11 +504,24 @@ function openDrawer(id) {
     <div class="content">${b.content ? esc(b.content) : '<span class="hint">Content is not in the event log. In live mode it loads from the database.</span>'}</div>
     ${w ? `<div class="sec"><h4>Label</h4><div>${w.requested != null ? `Agent declared L${w.level}. ` : ""}Session taint at write time: <b>L${w.taint}</b>. ${w.level < w.taint ? '<b style="color:var(--filter)">Under-labelled.</b>' : "Label matches the taint."}</div></div>` : ""}
     ${b.review_reason ? `<div class="sec"><h4>Review</h4><div><span class="badge ${esc(b.review_action)}">${esc(b.review_action)}</span> ${esc(b.review_reason)}</div></div>` : ""}
+    ${lineageHTML(b)}
     <div class="sec"><h4>Who can read it</h4><div class="who-can">${who}</div></div>
     ${b.ratings?.length ? `<div class="sec"><h4>Ratings</h4>${b.ratings.map((r) => `<div>${esc(r.agent_id)} ${"★".repeat(Number(r.accuracy) || 0)} <span class="hint">${esc(r.reason || "")}</span></div>`).join("")}</div>` : ""}`;
   $("#drawer").hidden = false;
 }
 $("#drawerX").onclick = () => ($("#drawer").hidden = true);
+$("#drawerBody").addEventListener("click", (ev) => { const id = ev.target.closest("[data-open]")?.dataset.open; if (id) openDrawer(id); });
+
+function lineageHTML(b) {
+  const chip = (id) => { const x = S.blocks.get(id); return `<button class="lin ${x?.stale ? "stale" : ""}" data-open="${esc(id)}">${esc(id)}${x ? ` <span class="hint">L${x.level}</span>` : ""}</button>`; };
+  const from = b.sources || [], used = usedBy(b.block_id);
+  if (!from.length && !used.length && !b.stale && !b.corrected) return "";
+  return `<div class="sec"><h4>Lineage</h4>
+    ${b.stale ? `<div class="stale-note">A block this was built from has been corrected since it was written. Agents reading it get a re-check warning.</div>` : ""}
+    ${b.corrected ? `<div class="hint">Corrected; the previous version is kept in history.</div>` : ""}
+    <div class="lin-row"><span class="hint">built from</span>${from.length ? from.map(chip).join("") : '<span class="hint">nothing (original record)</span>'}</div>
+    <div class="lin-row"><span class="hint">used by</span>${used.length ? used.map(chip).join("") : '<span class="hint">no blocks yet</span>'}</div></div>`;
+}
 
 // ------------------------------------------------------------------ HW7 panel
 

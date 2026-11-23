@@ -52,6 +52,7 @@ reviewer because there was no LLM key in the recording environment. The meta fil
 | Taint chart | Each session's taint as a step line; squares are writes at the level they got (amber = below the taint) |
 | HW7 panel | Leak rate, correctness and over-restriction for taint vs self, from `bench/results/results.csv` |
 | LEAK alarm | Fires when an agent reads a written block whose writer had read material above that agent's clearance |
+| Lineage (added by C) | `memory_correct` shows as a CORRECT line; the corrected block gets a `corrected` badge and amber beams run to every block built on it, which turn `STALE` (amber glow). The block drawer lists *built from* and *used by*, each clickable |
 
 Click any block for its content, label basis, review reason, ratings and who can read it.
 
