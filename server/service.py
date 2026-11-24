@@ -319,6 +319,7 @@ class MemoryService:
         # everything built on it. Those carry the old version, so they would always "contradict" the fix.
         skip = {block_id, *self.store.derived_from(block_id)}
         source_versions = None
+        cited = []
         if sources is not None:
             if (not isinstance(sources, list) or not sources
                     or not all(isinstance(source, str) and source for source in sources)
@@ -334,10 +335,21 @@ class MemoryService:
                 if self.sessions.read_version(session, source_id) != version:
                     return self._error("INVALID_SOURCES", self.t["bad_sources"])
                 source_versions[source_id] = version
+                cited.append(source)
                 level = max(level, source["level"])
-        ctx = search(f"{block['title']} {content}",
-                     [b for b in self.store.all_blocks() if b["block_id"] not in skip], agent, limit=CONTEXT_LIMIT)
-        context = [_pick(b, CONTEXT_FIELDS) for b in ctx.results]
+        skip.update(source_versions or ())
+        current, historical = [], []
+        for record in self.store.all_blocks(with_lineage=True):
+            if record["block_id"] not in skip:
+                (historical if record["stale_since"] is not None else current).append(record)
+        query = f"{block['title']} {content}"
+        groups = (
+            ("cited_current", cited),
+            ("related", search(query, current, agent, limit=CONTEXT_LIMIT).results),
+            ("historical", search(query, historical, agent, limit=CONTEXT_LIMIT).results),
+        )
+        context = [{**_pick(record, CONTEXT_FIELDS), "evidence_role": role, "status": record["status"]}
+                   for role, records in groups for record in records]
         try:
             raw = self.review_fn(block["title"], content, context)
         except Exception as e:

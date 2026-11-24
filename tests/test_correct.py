@@ -30,6 +30,35 @@ class CorrectCase(ServiceTestCase):
 
 
 class TestCorrectApplies(CorrectCase):
+    def test_review_prioritizes_checked_source_and_marks_stale_context(self):
+        brief, note = self.derived_from_101()
+        self.svc.correct("finance", "b-101", "reconciled figure 3.9%", "recount")
+        self.svc.read("finance", block_id="b-101")
+
+        self.svc.correct("finance", note, "corrected refund summary", "checked", sources=["b-101"])
+
+        context = self.review.calls[-1]["context"]
+        self.assertEqual((context[0]["block_id"], context[0]["evidence_role"]), ("b-101", "cited_current"))
+        historic = next(record for record in context if record["block_id"] == brief)
+        self.assertEqual(historic["evidence_role"], "historical")
+        self.assertEqual(len({record["block_id"] for record in context}), len(context))
+
+    def test_citations_leave_room_for_independent_current_evidence(self):
+        _, note = self.derived_from_101()
+        citations = ["b-001", "b-101", "b-318"]
+        for source in citations:
+            self.svc.read("finance", block_id=source)
+        conflict = self.store.insert_written_block(
+            title="Independent audit refund summary", content="Independent audit found 4.2%.",
+            level=2, scope="finance", status="verified", author="finance",
+            review_action="pass", review_reason="verified audit",
+        )
+        self.svc.correct("finance", note, "Independent audit refund summary: 3.9%", "checked", sources=citations)
+
+        roles = {record["block_id"]: record["evidence_role"] for record in self.review.calls[-1]["context"]}
+        self.assertTrue(all(roles[source] == "cited_current" for source in citations))
+        self.assertEqual(roles[conflict], "related")
+
     def test_correction_replaces_sources_and_future_corrections_follow_new_lineage(self):
         brief, note = self.derived_from_101()
         self.svc.correct("finance", "b-101", "corrected figure", "recount")
