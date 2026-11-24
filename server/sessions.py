@@ -26,6 +26,7 @@ class Session:
     last_active: float
     max_level_read: int = 0
     read_block_ids: set[str] = field(default_factory=set)
+    read_versions: dict[str, int] = field(default_factory=dict)
 
 
 class SessionStore:
@@ -56,7 +57,12 @@ class SessionStore:
         """记录一次成功的读取。只在 block 内容真正返回给 agent 时调用；被拒的读取不要调用。"""
         with self._lock:
             session.read_block_ids.add(block["block_id"])
+            session.read_versions[block["block_id"]] = block.get("revision", 0)
             session.max_level_read = max(session.max_level_read, block["level"])
+
+    def read_version(self, session: Session, block_id: str) -> int | None:
+        with self._lock:
+            return session.read_versions.get(block_id)
 
     def has_read(self, session: Session, block_id: str) -> bool:
         with self._lock:

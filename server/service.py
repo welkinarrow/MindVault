@@ -5,6 +5,7 @@
 所有方法都是同步的、线程安全的，可以在工作线程中并发调用。
 """
 
+import json
 import logging
 from typing import Any, Callable, Optional
 
@@ -38,6 +39,8 @@ TEXTS = {
         "review_crashed": "审核函数出错，已自动隔离",
         "unknown_agent": "无法识别调用者，请检查密钥",
         "bad_reason": f"reason 必须是 1–{MAX_REASON} 个字符的字符串",
+        "bad_sources": "sources 必须是当前会话已读的、可访问且非过时的去重来源，不得形成循环。",
+        "sources_changed": "记录或来源在更正提交前已变更，请重新读取后重试。",
         "stale_notice": "这条内容依据的某条记录在它写成之后被更正过。引用前请重新核对。",
     },
     "en": {
@@ -52,6 +55,8 @@ TEXTS = {
         "review_crashed": "The review function failed; quarantined automatically.",
         "unknown_agent": "Caller not recognised; check the key.",
         "bad_reason": f"reason must be a string of 1-{MAX_REASON} characters.",
+        "bad_sources": "Provide distinct, readable, current sources read in this session, without creating a cycle.",
+        "sources_changed": "The record or its sources changed before the correction was saved. Read again and retry.",
         "stale_notice": "A record this was built from has been corrected since it was written. "
                         "Re-check it before relying on it.",
     },
@@ -73,10 +78,10 @@ def _event(name: str, *fields: object) -> None:
     log.info("%-10s %s", f"[{name}]", "  ".join(str(f) for f in fields))
 
 
-def _present(block: dict, fields: tuple, stale: set, notice: str) -> dict:
+def _present(block: dict, fields: tuple, notice: str) -> dict:
     """What an agent sees of a block. Stale blocks get a warning that does not name the corrected source."""
     out = _pick(block, fields)
-    if block["block_id"] in stale:
+    if block["stale_since"] is not None:
         out.update(stale=True, stale_notice=notice)
     return out
 
@@ -130,6 +135,17 @@ class MemoryService:
 
     # ------------------------------------------------------------ memory_read
 
+    def _present_full(self, agent: dict, block: dict, get_source: Callable[[str], Optional[dict]]) -> dict:
+        shown = _present(block, PUBLIC_FIELDS, self.t["stale_notice"])
+        visible = []
+        for source_id in json.loads(block["sources"] or "[]"):
+            source = get_source(source_id)
+            if source is not None and can_read(agent, source) is None:
+                visible.append(source_id)
+        if visible:
+            shown["sources"] = visible
+        return shown
+
     def read(self, agent_id: str, query: object = None, block_id: object = None) -> dict:
         agent, session = self._begin(agent_id)
         if agent is None:
@@ -148,7 +164,8 @@ class MemoryService:
         return self._read_by_id(agent, session, block_id.strip())
 
     def _read_by_query(self, agent: dict, session: Session, query: str) -> dict:
-        result = search(query, self.store.all_blocks(), agent, limit=READ_LIMIT)
+        blocks = {block["block_id"]: block for block in self.store.all_blocks(with_lineage=True)}
+        result = search(query, list(blocks.values()), agent, limit=READ_LIMIT)
         aid = agent["agent_id"]
         for block, code in result.filtered:
             _event("READ", aid, block["block_id"], _label(block), f"FILTERED {code}")
@@ -156,19 +173,19 @@ class MemoryService:
         # HW7 改动（v0.9）：titles 模式下检索只列出标题，不返回正文，也不计入污点和"读过"；
         # 结果记为 LISTED 而不是 ALLOW，verify.py 等按 ALLOW 统计"读过"的脚本不受影响
         preview = self.search_mode == "titles"
-        stale = self.store.stale_ids()
         out = []
         for block in result.results:
             if preview:
                 _event("READ", aid, block["block_id"], _label(block), "LISTED")
                 self._read_event(aid, session, block, "LISTED", None, via="query", query=query)
-                out.append(_present(block, PREVIEW_FIELDS, stale, self.t["stale_notice"]))
+                out.append(_present(block, PREVIEW_FIELDS, self.t["stale_notice"]))
             else:
-                self.sessions.record_read(session, block)
+                shown = self._present_full(agent, block, blocks.get)
                 self.store.add_taint(aid, block["block_id"], block["level"])
+                self.sessions.record_read(session, block)
                 _event("READ", aid, block["block_id"], _label(block), "ALLOW")
                 self._read_event(aid, session, block, "ALLOW", None, via="query", query=query)
-                out.append(_present(block, PUBLIC_FIELDS, stale, self.t["stale_notice"]))
+                out.append(shown)
         self.events.emit("SEARCH", agent=aid, result=f"{len(out)} returned", session=session.session_id,
                          query=query, returned=[b["block_id"] for b in out],
                          filtered=[b["block_id"] for b, _ in result.filtered],
@@ -186,7 +203,8 @@ class MemoryService:
         )
 
     def _read_by_id(self, agent: dict, session: Session, block_id: str) -> dict:
-        block = self.store.get_block(block_id)
+        blocks = self.store.get_block_with_sources(block_id)
+        block = blocks.get(block_id)
         if block is None:
             _event("READ", agent["agent_id"], block_id, "-", "DENY NOT_FOUND")
             self._read_event(agent["agent_id"], session, None, "DENY", "NOT_FOUND", via="id", block_id=block_id)
@@ -198,11 +216,11 @@ class MemoryService:
             self._read_event(agent["agent_id"], session, block, "DENY", code, via="id")
             return denial(code, block_id, block, lang=self.lang)
 
-        self.sessions.record_read(session, block)
+        shown = self._present_full(agent, block, blocks.get)
         self.store.add_taint(agent["agent_id"], block_id, block["level"])
+        self.sessions.record_read(session, block)
         _event("READ", agent["agent_id"], block_id, _label(block), "ALLOW")
         self._read_event(agent["agent_id"], session, block, "ALLOW", None, via="id")
-        shown = _present(block, PUBLIC_FIELDS, self.store.stale_ids(), self.t["stale_notice"])
         return {"results": [shown], "data_notice": self.t["data_notice"]}
 
     # ------------------------------------------------------------ memory_write
@@ -273,7 +291,7 @@ class MemoryService:
 
     # ------------------------------------------------------------ memory_correct
 
-    def correct(self, agent_id: str, block_id: object, content: object, reason: object) -> dict:
+    def correct(self, agent_id: str, block_id: object, content: object, reason: object, sources: object = None) -> dict:
         """Replace a block's content after review, keep the old version, and flag every block built on it.
         Only blocks the agent can read and that belong to its write scope; the level can only go up."""
         agent, session = self._begin(agent_id)
@@ -287,7 +305,7 @@ class MemoryService:
             return self._error("INVALID_INPUT", self.t["bad_reason"])
         block_id = block_id.strip()
 
-        block = self.store.get_block(block_id)
+        block = self.store.get_block(block_id, with_lineage=True)
         code = "NOT_FOUND" if block is None else can_correct(agent, block)
         if code is not None:
             _event("CORRECT", agent_id, block_id, f"DENY {code}")
@@ -300,6 +318,23 @@ class MemoryService:
         # Review context: related blocks the agent may read, minus the block being replaced and
         # everything built on it. Those carry the old version, so they would always "contradict" the fix.
         skip = {block_id, *self.store.derived_from(block_id)}
+        source_versions = None
+        if sources is not None:
+            if (not isinstance(sources, list) or not sources
+                    or not all(isinstance(source, str) and source for source in sources)
+                    or len(set(sources)) != len(sources)):
+                return self._error("INVALID_SOURCES", self.t["bad_sources"])
+            source_versions = {}
+            for source_id in sources:
+                source = self.store.get_block(source_id, with_lineage=True)
+                if (source is None or source_id in skip or source["stale_since"] is not None
+                        or can_read(agent, source) is not None):
+                    return self._error("INVALID_SOURCES", self.t["bad_sources"])
+                version = source["revision"]
+                if self.sessions.read_version(session, source_id) != version:
+                    return self._error("INVALID_SOURCES", self.t["bad_sources"])
+                source_versions[source_id] = version
+                level = max(level, source["level"])
         ctx = search(f"{block['title']} {content}",
                      [b for b in self.store.all_blocks() if b["block_id"] not in skip], agent, limit=CONTEXT_LIMIT)
         context = [_pick(b, CONTEXT_FIELDS) for b in ctx.results]
@@ -320,13 +355,17 @@ class MemoryService:
         flagged = self.store.apply_correction(
             block_id=block_id, content=content, level=level, corrected_by=agent_id,
             reason=reason.strip(), review_action=action, review_reason=review_reason,
+            source_versions=source_versions, expected_revision=block["revision"],
         )
+        if flagged is None:
+            return self._error("SOURCES_CHANGED", self.t["sources_changed"])
         self.store.add_taint(agent_id, block_id, level)
+        lineage = {"sources": list(source_versions)} if source_versions is not None else {}
         _event("CORRECT", agent_id, block_id, f"L{block['level']}->L{level}",
                f"flagged={','.join(flagged) or '-'}", f'"{reason.strip()}"')
         self.events.emit("CORRECT", agent=agent_id, block=block_id, level=level, scope=block["scope"],
-                         result="APPLIED", flagged=flagged, reason=reason.strip(), session=session.session_id)
-        result.update(applied=True, flagged=flagged)
+                         result="APPLIED", flagged=flagged, reason=reason.strip(), session=session.session_id, **lineage)
+        result.update(applied=True, flagged=flagged, **lineage)
         return result
 
     # ------------------------------------------------------------ memory_rate

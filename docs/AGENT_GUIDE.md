@@ -12,6 +12,7 @@ and how sensitive anything you write is. You never set those yourself.
 | `memory_read` | Keyword search (`query`) or read one record (`block_id`) |
 | `memory_write` | Save a conclusion (`title`, `content`); returns its new ID and label |
 | `memory_rate` | Rate the accuracy (1-5) of records you read in this session |
+| `memory_correct` | Correct a record in your write scope and update the evidence it points to |
 
 ## 2. How to connect
 
@@ -65,6 +66,19 @@ Search is keyword-based, not semantic. Several short searches ("attrition Austin
 work better than one long sentence. You get at most 5 results, each with `block_id`, `title`,
 `content`, `level`, `scope`, `status` and `author`. No matches gives an empty list, not an
 error.
+
+Full reads include `sources` when you can access those source records. If a record is marked
+`stale`, open its source IDs directly. If a source is also stale, follow its sources until
+you find current evidence. Some source IDs may be omitted based on your permissions.
+
+**`memory_correct`.** Give the target `block_id`, its complete corrected `content`, and a
+brief `reason` (1–200 characters). When refreshing a derived record, pass `sources` with the
+current evidence IDs you actually used. When the evidence shares the note's scope, name it by
+title and ID in the corrected text. Keep evidence from other scopes in the permission-filtered
+`sources` field only. A stale intermediate note can explain the old claim. Credit the current
+evidence for the correction. You must read the current sources in this session. The tool
+replaces the previous source links when the correction is applied. Omitting `sources` retains
+the existing links. If the sources change during review, read them again before retrying.
 
 **`memory_write`.** Give:
 - `title`: 1-100 characters

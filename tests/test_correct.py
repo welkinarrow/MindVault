@@ -30,6 +30,67 @@ class CorrectCase(ServiceTestCase):
 
 
 class TestCorrectApplies(CorrectCase):
+    def test_correction_replaces_sources_and_future_corrections_follow_new_lineage(self):
+        brief, note = self.derived_from_101()
+        self.svc.correct("finance", "b-101", "corrected figure", "recount")
+        self.assertEqual(self.svc.read("finance", block_id=note)["results"][0]["sources"], ["b-101", brief])
+        self.assertEqual(self.svc.read("finance", block_id=brief)["results"][0]["sources"], ["b-101"])
+
+        self.svc.read("finance", block_id="b-101")
+        corrected = self.svc.correct("finance", note, "updated note", "checked original", sources=["b-101"])
+        self.assertEqual(corrected["sources"], ["b-101"])
+        self.assertEqual(self.store.get_sources(note), ["b-101"])
+        self.assertEqual(self.svc.read("finance", block_id=note)["results"][0]["sources"], ["b-101"])
+        self.assertNotIn("stale", self.svc.read("finance", block_id=note)["results"][0])
+        self.assertNotIn(note, self.svc.correct("finance", brief, "updated brief", "recount")["flagged"])
+        self.assertIn(note, self.svc.correct("finance", "b-101", "second recount", "new data")["flagged"])
+
+    def test_read_omits_sources_outside_readers_scope(self):
+        note = self.store.insert_written_block(
+            title="Public note", content="Public content", level=0, scope="public", status="unverified",
+            author="intern", review_action="pass", review_reason="test", sources=["b-101", "b-001"],
+        )
+        self.assertEqual(self.svc.read("intern", block_id=note)["results"][0]["sources"], ["b-001"])
+        self.assertEqual(self.svc.read("intern", query="Public note")["results"][0]["sources"], ["b-001"])
+
+    def test_explicit_sources_must_be_read_current_and_non_cyclic(self):
+        brief, descendant = self.derived_from_101()
+        self.svc.read("finance", block_id=descendant)
+        for source in ("b-001", "b-412", brief, descendant):
+            response = self.svc.correct("finance", brief, "new", "checked", sources=[source])
+            self.assertEqual(response["error"]["code"], "INVALID_SOURCES")
+        self.svc.correct("finance", "b-101", "new source", "recount")
+        self.svc.read("finance", block_id=brief)
+        response = self.svc.correct("finance", descendant, "new", "checked", sources=[brief])
+        self.assertEqual(response["error"]["code"], "INVALID_SOURCES")
+        self.assertTrue(self.svc.read("finance", block_id=descendant)["results"][0]["stale"])
+
+    def test_source_corrected_during_review_prevents_stale_replacement(self):
+        brief, note = self.derived_from_101()
+        self.svc.read("finance", block_id="b-101")
+
+        def review_then_update_source(title, content, context):
+            self.store.apply_correction(block_id="b-101", content="new data", level=2,
+                                        corrected_by="finance", reason="new count",
+                                        review_action="pass", review_reason="approved")
+            return {"action": "pass", "reason": "approved"}
+
+        self.svc.review_fn = review_then_update_source
+        response = self.svc.correct("finance", note, "outdated summary", "checked", sources=["b-101"])
+        self.assertEqual(response["error"]["code"], "SOURCES_CHANGED")
+        self.assertEqual(self.store.get_sources(note), ["b-101", brief])
+        self.assertEqual(self.history(note), [])
+
+    def test_same_content_source_correction_requires_rereading_new_revision(self):
+        _, note = self.derived_from_101()
+        self.svc.correct("finance", "b-101", "unchanged figure", "first audit")
+        self.svc.read("finance", block_id="b-101")
+        self.svc.correct("finance", "b-101", "unchanged figure", "second audit")
+
+        response = self.svc.correct("finance", note, "updated", "checked", sources=["b-101"])
+        self.assertEqual(response["error"]["code"], "INVALID_SOURCES")
+        self.assertEqual(self.history(note), [])
+
     def test_content_updated_and_history_kept(self):
         old = self.store.get_block("b-101")["content"]
         r = self.svc.correct("finance", "b-101", "corrected figure: 3.9%", "ticket data was recounted")

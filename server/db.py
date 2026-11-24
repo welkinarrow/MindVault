@@ -12,7 +12,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator, Optional
 
-BLOCK_COLUMNS = ("block_id", "title", "content", "level", "scope", "status", "author")
+BLOCK_COLUMNS = "block_id, title, content, level, scope, status, author"
+BLOCK_REVISION = "(SELECT COALESCE(MAX(id), 0) FROM block_history WHERE block_id = blocks.block_id)"
+LINEAGE_COLUMNS = f"{BLOCK_COLUMNS}, sources, stale_since, {BLOCK_REVISION} AS revision"
 SCOPE_CHECK = re.compile(r"\s*CHECK\s*\(\s*scope\s+IN\s*\([^)]*\)\s*\)", re.IGNORECASE)
 
 
@@ -105,17 +107,28 @@ class Store:
 
     # ------------------------------------------------------------ 读取
 
-    def all_blocks(self) -> list[dict]:
+    def all_blocks(self, *, with_lineage: bool = False) -> list[dict]:
         """全部 block（含已隔离的，由 policy.can_read 负责过滤）。"""
-        cols = ", ".join(BLOCK_COLUMNS)
         with self._conn() as c:
-            return [dict(r) for r in c.execute(f"SELECT {cols} FROM blocks ORDER BY block_id")]
+            return [dict(r) for r in c.execute(
+                f"SELECT {LINEAGE_COLUMNS if with_lineage else BLOCK_COLUMNS} FROM blocks ORDER BY block_id"
+            )]
 
-    def get_block(self, block_id: str) -> Optional[dict]:
-        cols = ", ".join(BLOCK_COLUMNS)
+    def get_block(self, block_id: str, *, with_lineage: bool = False) -> Optional[dict]:
         with self._conn() as c:
-            row = c.execute(f"SELECT {cols} FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
+            row = c.execute(f"SELECT {LINEAGE_COLUMNS if with_lineage else BLOCK_COLUMNS} FROM blocks WHERE block_id = ?",
+                            (block_id,)).fetchone()
         return dict(row) if row else None
+
+    def get_block_with_sources(self, block_id: str) -> dict[str, dict]:
+        """Read a block and its immediate sources from one SQLite snapshot."""
+        with self._conn() as c:
+            rows = c.execute(
+                f"SELECT {LINEAGE_COLUMNS} FROM blocks WHERE block_id = ? OR block_id IN ("
+                "SELECT value FROM json_each((SELECT sources FROM blocks WHERE block_id = ?)))",
+                (block_id, block_id),
+            )
+            return {row["block_id"]: dict(row) for row in rows}
 
     def get_sources(self, block_id: str) -> list[str]:
         """Blocks the author had read before writing block_id. Seed blocks have none."""
@@ -135,18 +148,33 @@ class Store:
 
     # ------------------------------------------------------------ corrections
     def apply_correction(self, *, block_id: str, content: str, level: int, corrected_by: str,
-                         reason: str, review_action: str, review_reason: str) -> list[str]:
+                         reason: str, review_action: str, review_reason: str,
+                         source_versions: Optional[dict[str, int]] = None,
+                         expected_revision: Optional[int] = None) -> Optional[list[str]]:
         """Replace a block's content (old version goes to block_history), clear its own stale flag,
         and flag every block derived from it, directly or through other blocks. Returns the flagged IDs.
-        All in one transaction: either everything changes or nothing does."""
+        Returns None if the proposed lineage changed before the correction could be saved."""
         conn = sqlite3.connect(self.db_path, timeout=10, isolation_level=None)
         try:
             conn.execute("PRAGMA foreign_keys = ON")
             conn.execute("BEGIN IMMEDIATE")
             now = now_iso()
-            old = conn.execute("SELECT title, content, level FROM blocks WHERE block_id = ?", (block_id,)).fetchone()
+            old = conn.execute(f"SELECT title, content, level, {BLOCK_REVISION} FROM blocks WHERE block_id = ?",
+                               (block_id,)).fetchone()
             if old is None:
                 raise KeyError(block_id)
+            if expected_revision is not None and old[3] != expected_revision:
+                conn.execute("ROLLBACK")
+                return None
+            flagged = _derived(conn, block_id)
+            if source_versions is not None:
+                for source, version in source_versions.items():
+                    row = conn.execute(f"SELECT {BLOCK_REVISION}, stale_since FROM blocks WHERE block_id = ?",
+                                       (source,)).fetchone()
+                    if (row is None or tuple(row) != (version, None)
+                            or source == block_id or source in flagged):
+                        conn.execute("ROLLBACK")
+                        return None
             conn.execute(
                 "INSERT INTO block_history (block_id, old_title, old_content, old_level, corrected_by, reason, "
                 "corrected_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -154,10 +182,10 @@ class Store:
             )
             conn.execute(
                 "UPDATE blocks SET content = ?, level = ?, status = 'unverified', review_action = ?, "
-                "review_reason = ?, stale_since = NULL WHERE block_id = ?",
-                (content, level, review_action, review_reason, block_id),
+                "review_reason = ?, stale_since = NULL, sources = COALESCE(?, sources) WHERE block_id = ?",
+                (content, max(level, old[2]), review_action, review_reason,
+                 json.dumps(list(source_versions)) if source_versions is not None else None, block_id),
             )
-            flagged = _derived(conn, block_id)
             if flagged:
                 conn.executemany("UPDATE blocks SET stale_since = ? WHERE block_id = ?",
                                  [(now, b) for b in flagged])

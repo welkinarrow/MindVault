@@ -255,8 +255,9 @@ function onCorrect(e, anim) {
     pushEv(e, "CORRECT", a, `Correction to <code>${esc(e.block)}</code> <b>not applied</b>`, why, "warn");
     return;
   }
-  if (b) Object.assign(b, { level: e.level ?? b.level, status: "unverified", corrected: true, stale: false, content: b.content });
+  if (b) Object.assign(b, { level: e.level ?? b.level, status: "unverified", corrected: true, stale: false, sources: e.sources ?? b.sources });
   for (const id of e.flagged || []) { const d = S.blocks.get(id); if (d) d.stale = true; }
+  refreshOpenDrawer();
   ast(a).last = `corrected ${e.block}`;
   if (anim) {
     renderBoard();
@@ -483,10 +484,20 @@ async function hydrateCorrected(id) {
   const r = await (await fetch("/api/blocks")).json();
   const fresh = r.blocks.find((b) => b.block_id === id);
   const cur = S.blocks.get(id);
-  if (fresh && cur) { cur.content = fresh.content; cur.level = fresh.level; }
+  if (fresh && cur) { syncLiveBlock(cur, fresh); refreshOpenDrawer(); }
+}
+
+function syncLiveBlock(current, row) {
+  const { content, level, sources, stale } = normBlock(row);
+  Object.assign(current, { content, level, sources, stale });
 }
 
 // ------------------------------------------------------------------ drawer
+
+function refreshOpenDrawer() {
+  const drawer = $("#drawer");
+  if (!drawer.hidden) openDrawer(drawer.dataset.blockId);
+}
 
 function openDrawer(id) {
   const b = S.blocks.get(id);
@@ -507,7 +518,9 @@ function openDrawer(id) {
     ${lineageHTML(b)}
     <div class="sec"><h4>Who can read it</h4><div class="who-can">${who}</div></div>
     ${b.ratings?.length ? `<div class="sec"><h4>Ratings</h4>${b.ratings.map((r) => `<div>${esc(r.agent_id)} ${"★".repeat(Number(r.accuracy) || 0)} <span class="hint">${esc(r.reason || "")}</span></div>`).join("")}</div>` : ""}`;
-  $("#drawer").hidden = false;
+  const drawer = $("#drawer");
+  drawer.dataset.blockId = id;
+  drawer.hidden = false;
 }
 $("#drawerX").onclick = () => ($("#drawer").hidden = true);
 $("#drawerBody").addEventListener("click", (ev) => { const id = ev.target.closest("[data-open]")?.dataset.open; if (id) openDrawer(id); });
@@ -570,6 +583,10 @@ async function startLive() {
   S.labelMode = null; S.runId = snap.run_id;
   // Rebuild state from the current run without animation; the board already holds written blocks.
   for (const e of snap.events) apply(e, false);
+  for (const row of snap.blocks) {
+    const current = S.blocks.get(row.block_id);
+    if (current) syncLiveBlock(current, row);
+  }
   renderAll();
   if (es) es.close();
   es = new EventSource("/api/stream");
@@ -587,7 +604,7 @@ async function refreshLiveBlocks() {
   setTimeout(async () => {
     const r = await (await fetch("/api/blocks")).json();
     S.base = r.blocks;
-    for (const b of r.blocks) if (!S.blocks.has(b.block_id) || !S.blocks.get(b.block_id).written) S.blocks.set(b.block_id, { ...b });
+    for (const b of r.blocks) if (!S.blocks.has(b.block_id) || !S.blocks.get(b.block_id).written) S.blocks.set(b.block_id, normBlock(b));
     renderBoard();
   }, 400);
 }
