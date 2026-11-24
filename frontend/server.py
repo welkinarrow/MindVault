@@ -19,6 +19,7 @@ import csv
 import json
 import os
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 import uvicorn
@@ -45,6 +46,7 @@ DB = env_path("MEMORY_DB", "data/memory.db")
 AGENTS_FILE = env_path("AGENTS_FILE", "config/agents.json")
 AGENTS_EXAMPLE = ROOT / "config" / "agents.example.json"
 DEFAULT_SEED = ROOT / "data" / "seed_blocks.json"
+LOOPBACK_HOSTS = {"127.0.0.1", "::1", "localhost"}
 
 
 # --------------------------------------------------------------------------- helpers
@@ -88,7 +90,7 @@ def agents_public() -> list[dict]:
     return [{k: v for k, v in a.items() if k != "key"} for a in agents]
 
 
-def db_blocks(db: Path) -> list[dict]:
+def db_blocks(db: Path, *, show_corrections: bool = False) -> list[dict]:
     if not db.exists():
         return []
     con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
@@ -98,6 +100,11 @@ def db_blocks(db: Path) -> list[dict]:
         ratings = {}
         for r in con.execute("SELECT block_id, agent_id, accuracy, reason FROM ratings"):
             ratings.setdefault(r["block_id"], []).append(dict(r))
+        if show_corrections and con.execute("SELECT 1 FROM sqlite_master WHERE name = 'block_history'").fetchone():
+            corrected = {r[0] for r in con.execute("SELECT DISTINCT block_id FROM block_history")}
+            for b in blocks:
+                if b["block_id"] in corrected:
+                    b["corrected"] = True
     except sqlite3.Error:
         return []
     finally:
@@ -105,6 +112,53 @@ def db_blocks(db: Path) -> list[dict]:
     for b in blocks:
         b["ratings"] = ratings.get(b["block_id"], [])
     return blocks
+
+
+def legacy_flagged_ids(change: sqlite3.Row, conn: sqlite3.Connection) -> list[str] | None:
+    """Recover impact for old revisions if the matching event is unambiguous."""
+    block, time, agent, reason = (change[k] for k in ("block_id", "corrected_at", "corrected_by", "reason"))
+    count = conn.execute("SELECT COUNT(*) FROM block_history WHERE block_id = ? AND corrected_at = ? "
+                         "AND corrected_by = ? AND reason = ?", (block, time, agent, reason)).fetchone()[0]
+    if count != 1:
+        return None
+    matches = [e.get("flagged") for e in read_jsonl(EVENTS)
+               if e.get("event") == "CORRECT" and e.get("result") == "APPLIED" and e.get("block") == block
+               and e.get("agent") == agent and e.get("reason") == reason
+               and str(e.get("time", ""))[:19] == time[:19]]
+    if len(matches) != 1 or not isinstance(matches[0], list):
+        return None
+    return matches[0]
+
+
+def latest_change(block_id: str) -> dict | None:
+    if not DB.exists():
+        return None
+    with closing(sqlite3.connect(f"{DB.as_uri()}?mode=ro", uri=True)) as conn:
+        conn.row_factory = sqlite3.Row
+        conn.execute("BEGIN")
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(block_history)")}
+        if not columns:
+            return None
+        flagged = "h.flagged_ids" if "flagged_ids" in columns else "NULL"
+        change = conn.execute(
+            f"SELECT h.id, {flagged} AS flagged_ids, h.block_id, h.old_content AS before, b.content AS after, "
+            "h.reason, h.corrected_by, h.corrected_at, b.sources, b.review_action, b.review_reason "
+            "FROM block_history h JOIN blocks b USING (block_id) WHERE h.block_id = ? ORDER BY h.id DESC LIMIT 1",
+            (block_id,),
+        ).fetchone()
+        if change is None:
+            return None
+        flagged_ids = json.loads(change["flagged_ids"]) if change["flagged_ids"] is not None else legacy_flagged_ids(change, conn)
+        affected = None if flagged_ids is None else [{"block_id": row["block_id"], "stale": bool(row["needs_review"])}
+            for row in conn.execute(
+                "SELECT b.block_id, b.stale_since IS NOT NULL AND NOT EXISTS ("
+                "SELECT 1 FROM block_history h WHERE h.block_id = b.block_id AND h.id > ?"
+                ") AS needs_review FROM blocks b WHERE b.block_id IN (SELECT value FROM json_each(?)) ORDER BY b.block_id",
+                (change["id"], json.dumps(flagged_ids)),
+            )]
+        result = dict(change)
+        del result["id"], result["flagged_ids"]
+        return {**result, "sources": json.loads(change["sources"] or "[]"), "affected": affected}
 
 
 def seed_blocks(seed: Path) -> list[dict]:
@@ -249,21 +303,40 @@ async def index(request: Request):
     return FileResponse(STATIC / "index.html")
 
 
+def history_available(request: Request) -> bool:
+    return (os.environ.get("FRONTEND_HOST", "127.0.0.1") in LOOPBACK_HOSTS
+            and request.client is not None and request.client.host in LOOPBACK_HOSTS
+            and request.url.hostname in LOOPBACK_HOSTS
+            and not any(header in request.headers for header in ("forwarded", "x-forwarded-for", "x-forwarded-host")))
+
+
 async def api_config(request: Request):
     return JSONResponse({"agents": agents_public(), "db": DB.name,
-                         "events_file": str(EVENTS.relative_to(ROOT))})
+                         "events_file": str(EVENTS.relative_to(ROOT)), "history_available": history_available(request)})
 
 
 async def api_live(request: Request):
     """Snapshot for live mode: current blocks and the events of the latest service run."""
     events = last_run(read_jsonl(EVENTS))
     run_id = events[0].get("run_id") if events else None
-    return JSONResponse({"blocks": db_blocks(DB), "events": events, "run_id": run_id,
+    return JSONResponse({"blocks": db_blocks(DB, show_corrections=history_available(request)),
+                         "events": events, "run_id": run_id,
                          "usage": usage_totals(run_id)})
 
 
 async def api_blocks(request: Request):
-    return JSONResponse({"blocks": db_blocks(DB)})
+    return JSONResponse({"blocks": db_blocks(DB, show_corrections=history_available(request))})
+
+
+async def api_changes(request: Request):
+    headers = {"Cache-Control": "no-store"}
+    if not history_available(request):
+        return JSONResponse({"error": "Correction history is available only in the local control room."},
+                            status_code=403, headers=headers)
+    change = latest_change(request.path_params["block_id"])
+    if change is None:
+        return JSONResponse({"error": "No saved correction found."}, status_code=404, headers=headers)
+    return JSONResponse(change, headers=headers)
 
 
 async def api_stream(request: Request):
@@ -325,6 +398,7 @@ app = Starlette(routes=[
     Route("/api/config", api_config),
     Route("/api/live", api_live),
     Route("/api/blocks", api_blocks),
+    Route("/api/changes/{block_id}", api_changes),
     Route("/api/stream", api_stream),
     Route("/api/sources", api_sources),
     Route("/api/replay", api_replay),
@@ -338,4 +412,4 @@ if __name__ == "__main__":
     host = os.environ.get("FRONTEND_HOST", "127.0.0.1")
     port = int(os.environ.get("FRONTEND_PORT", "8100"))
     print(f"MindVault control room: http://{host}:{port}  (db={DB.name}, events={EVENTS.relative_to(ROOT)})")
-    uvicorn.run(app, host=host, port=port, log_level="warning")
+    uvicorn.run(app, host=host, port=port, log_level="warning", proxy_headers=False)

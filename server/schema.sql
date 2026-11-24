@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS block_history (
     old_level     INTEGER NOT NULL,
     corrected_by  TEXT NOT NULL,
     reason        TEXT NOT NULL,
-    corrected_at  TEXT NOT NULL
+    corrected_at  TEXT NOT NULL,
+    flagged_ids   TEXT                     -- JSON array of affected IDs; NULL for legacy history
 );
 
 CREATE TABLE ratings (

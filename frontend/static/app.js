@@ -24,6 +24,7 @@ const REASONS = {
 const S = {
   mode: "live",
   view: "all",
+  historyAvailable: false,
   agents: [],            // from /api/config (keys stripped server-side)
   base: [],              // board at the start of the run
   blocks: new Map(),
@@ -257,7 +258,7 @@ function onCorrect(e, anim) {
   }
   if (b) Object.assign(b, { level: e.level ?? b.level, status: "unverified", corrected: true, stale: false, sources: e.sources ?? b.sources });
   for (const id of e.flagged || []) { const d = S.blocks.get(id); if (d) d.stale = true; }
-  refreshOpenDrawer();
+  refreshOpenDrawer(e.block);
   ast(a).last = `corrected ${e.block}`;
   if (anim) {
     renderBoard();
@@ -310,7 +311,7 @@ function renderHeader() {
     const b = document.createElement("button");
     b.dataset.view = id; b.textContent = id;
     if (S.view === id) b.classList.add("on");
-    b.onclick = () => { S.view = id; renderHeader(); renderBoard(); };
+    b.onclick = () => { S.view = id; renderHeader(); renderBoard(); refreshOpenDrawer(); };
     seg.append(b);
   }
 }
@@ -333,6 +334,7 @@ function renderAgents() {
 }
 
 function renderBoard() {
+  const focused = document.activeElement?.closest("[data-changes]")?.closest(".card")?.dataset.id;
   const viewer = S.view === "all" ? null : agentCfg(S.view);
   const floors = [3, 2, 1, 0].map((l) => {
     const cards = [...S.blocks.values()].filter((b) => b.level === l)
@@ -341,7 +343,8 @@ function renderBoard() {
     return `<div class="floor" data-l="${l}"><div class="floor-label"><b>L${l}</b>${LEVEL_NAMES[l]}</div><div class="cards">${cards}</div></div>`;
   }).join("");
   $("#floors").innerHTML = floors;
-  $$(".card", $("#floors")).forEach((c) => c.onclick = () => openDrawer(c.dataset.id));
+  $$(".card", $("#floors")).forEach((c) => c.onclick = (e) => openDrawer(c.dataset.id, Boolean(e.target.closest("[data-changes]"))));
+  if (focused) correctionOpener(focused)?.focus({ preventScroll: true });
 }
 
 function cardHTML(b, viewer) {
@@ -358,7 +361,7 @@ function badgesHTML(b) {
   if (b.status === "unverified") out.push(`<span class="badge">unverified</span>`);
   if (b.written && b.review_action) out.push(`<span class="badge ${esc(b.review_action)}">${esc(b.review_action)}</span>`);
   if (b.stale) out.push(`<span class="badge stale" title="A block this was built from has been corrected">STALE</span>`);
-  if (b.corrected) out.push(`<span class="badge corrected">corrected</span>`);
+  if (b.corrected) out.push(canOpenChanges() ? correctionButton("Corrected", b.title) : `<span class="badge corrected">corrected</span>`);
   if (b.under) out.push(`<span class="badge under" title="Taint would have labelled it L${b.taint_level}">UNDER L${b.taint_level}→L${b.level}</span>`);
   if (b.ratings?.length) {
     const avg = b.ratings.reduce((s, r) => s + Number(r.accuracy || 0), 0) / b.ratings.length;
@@ -369,7 +372,8 @@ function badgesHTML(b) {
 function renderBadges() {
   for (const el of $$(".card", $("#floors"))) {
     const b = S.blocks.get(el.dataset.id);
-    if (b) $(".badges", el).innerHTML = badgesHTML(b);
+    const badges = $(".badges", el);
+    if (b && !badges.contains(document.activeElement)) badges.innerHTML = badgesHTML(b);
   }
 }
 
@@ -490,18 +494,54 @@ async function hydrateCorrected(id) {
 function syncLiveBlock(current, row) {
   const { content, level, sources, stale } = normBlock(row);
   Object.assign(current, { content, level, sources, stale });
+  if (row.corrected) current.corrected = true;
 }
 
 // ------------------------------------------------------------------ drawer
 
-function refreshOpenDrawer() {
-  const drawer = $("#drawer");
-  if (!drawer.hidden) openDrawer(drawer.dataset.blockId);
+let changeRequest = 0;
+let drawerOpener = null;
+let drawerOpenerId = null;
+
+function correctionOpener(id) {
+  return $$(".card").find((card) => card.dataset.id === id)?.querySelector("[data-changes]");
 }
 
-function openDrawer(id) {
+function refreshOpenDrawer(changedId) {
+  const drawer = $("#drawer");
+  if (drawer.hidden) return;
+  if (drawer.dataset.mode === "changes" && canOpenChanges()) {
+    const links = $$("#changeDetails [data-open]");
+    if (changedId === drawer.dataset.blockId || links.some((link) => link.dataset.open === changedId)) {
+      loadChangePanel(S.blocks.get(drawer.dataset.blockId), false);
+    }
+  } else openDrawer(drawer.dataset.blockId);
+}
+
+function canOpenChanges() {
+  return S.mode === "live" && S.view === "all" && S.historyAvailable;
+}
+
+function correctionButton(label, title) {
+  return `<button type="button" class="badge corrected" data-changes aria-label="${esc(label)} · ${esc(title)}">${label}</button>`;
+}
+
+function openDrawer(id, changes = false) {
   const b = S.blocks.get(id);
   if (!b) return;
+  const drawer = $("#drawer");
+  if (drawer.hidden) {
+    drawerOpener = document.activeElement;
+    drawerOpenerId = id;
+  }
+  drawer.dataset.blockId = id;
+  drawer.hidden = false;
+  if (changes && b.corrected && canOpenChanges()) {
+    drawer.dataset.mode = "changes";
+    loadChangePanel(b, true);
+    return;
+  }
+  drawer.dataset.mode = "record";
   const who = S.agents.map((ag) => {
     const ok = canRead(ag, b);
     const why = ok ? "can read" : b.status === "quarantined" ? "quarantined" : b.level > ag.level ? `L${ag.level} < L${b.level}` : `no ${b.scope} scope`;
@@ -510,30 +550,87 @@ function openDrawer(id) {
   const w = S.writes[id];
   $("#drawerBody").innerHTML = `
     <div class="mono" style="color:var(--l${b.level})">${esc(b.block_id)}</div>
-    <h3>${esc(b.title)}</h3>
-    <div class="meta"><span class="badge">L${b.level} ${LEVEL_NAMES[b.level]}</span><span class="badge">${esc(b.scope)}</span><span class="badge">${esc(b.status)}</span><span class="badge">by ${esc(b.author || "seed")}</span></div>
+    <h3 tabindex="-1">${esc(b.title)}</h3>
+    <div class="meta"><span class="badge">L${b.level} ${LEVEL_NAMES[b.level]}</span><span class="badge">${esc(b.scope)}</span><span class="badge">${esc(b.status)}</span><span class="badge">by ${esc(b.author || "seed")}</span>${b.corrected && canOpenChanges() ? correctionButton("What changed?", b.title) : ""}</div>
     <div class="content">${b.content ? esc(b.content) : '<span class="hint">Content is not in the event log. In live mode it loads from the database.</span>'}</div>
     ${w ? `<div class="sec"><h4>Label</h4><div>${w.requested != null ? `Agent declared L${w.level}. ` : ""}Session taint at write time: <b>L${w.taint}</b>. ${w.level < w.taint ? '<b style="color:var(--filter)">Under-labelled.</b>' : "Label matches the taint."}</div></div>` : ""}
     ${b.review_reason ? `<div class="sec"><h4>Review</h4><div><span class="badge ${esc(b.review_action)}">${esc(b.review_action)}</span> ${esc(b.review_reason)}</div></div>` : ""}
     ${lineageHTML(b)}
     <div class="sec"><h4>Who can read it</h4><div class="who-can">${who}</div></div>
     ${b.ratings?.length ? `<div class="sec"><h4>Ratings</h4>${b.ratings.map((r) => `<div>${esc(r.agent_id)} ${"★".repeat(Number(r.accuracy) || 0)} <span class="hint">${esc(r.reason || "")}</span></div>`).join("")}</div>` : ""}`;
-  const drawer = $("#drawer");
-  drawer.dataset.blockId = id;
-  drawer.hidden = false;
 }
-$("#drawerX").onclick = () => ($("#drawer").hidden = true);
-$("#drawerBody").addEventListener("click", (ev) => { const id = ev.target.closest("[data-open]")?.dataset.open; if (id) openDrawer(id); });
+function closeDrawer() {
+  const drawer = $("#drawer");
+  if (drawer.hidden) return;
+  drawer.hidden = true;
+  const opener = drawerOpener?.isConnected ? drawerOpener : correctionOpener(drawerOpenerId);
+  opener?.focus({ preventScroll: true });
+}
+
+$("#drawerX").onclick = closeDrawer;
+$("#drawerBody").addEventListener("click", (ev) => {
+  const id = ev.target.closest("[data-open]")?.dataset.open;
+  if (id) {
+    const back = ev.target.closest("[data-back]");
+    openDrawer(id);
+    $(back ? "#drawerBody [data-changes]" : "#drawerBody h3")?.focus();
+  }
+  if (ev.target.closest("[data-changes]")) openDrawer($("#drawer").dataset.blockId, true);
+});
+
+async function loadChangePanel(block, focus) {
+  if (!block) return;
+  if (focus) $("#drawerBody").innerHTML = `
+    <button type="button" class="lin" data-back data-open="${esc(block.block_id)}">Back to note</button>
+    <h3 tabindex="-1">What changed?</h3>
+    <div class="change-subtitle">${esc(block.block_id)} · ${esc(block.title)}</div>
+    <div id="changeDetails" aria-live="polite">Loading saved correction…</div>`;
+  const details = $("#changeDetails");
+  if (focus) $("#drawerBody h3").focus();
+  const isCurrent = ++changeRequest;
+  try {
+    const response = await fetch(`/api/changes/${encodeURIComponent(block.block_id)}`);
+    if (!response.ok) throw new Error("Correction history unavailable");
+    const change = await response.json();
+    if (details.isConnected && isCurrent === changeRequest) {
+      const focused = details.contains(document.activeElement) && document.activeElement.dataset.open;
+      details.innerHTML = changeHTML(change);
+      if (focused) ($$("[data-open]", details).find((link) => link.dataset.open === focused) || $("#drawerBody h3")).focus();
+    }
+  } catch {
+    if (details.isConnected && isCurrent === changeRequest) details.textContent = "Saved correction history is unavailable.";
+  }
+}
+
+function changeHTML(change) {
+  const timestamp = new Date(change.corrected_at).toLocaleString();
+  const needsReview = change.affected?.filter((block) => block.stale) || [];
+  const impact = change.affected === null ? "The correction event is unavailable."
+    : needsReview.length ? needsReview.map((block) => lineageChip(block.block_id, true)).join("")
+    : "No flagged notes still need review.";
+  return `<div class="change-meta">${esc(change.corrected_by)} · <time datetime="${esc(change.corrected_at)}">${esc(timestamp)}</time></div>
+    <div class="change-version"><b>Before</b><div class="content">${esc(change.before)}</div></div>
+    <div class="change-version after"><b>Saved correction</b><div class="content">${esc(change.after)}</div></div>
+    <div class="sec"><h4>Why it changed</h4>${esc(change.reason)}</div>
+    ${change.review_reason ? `<div class="sec"><h4>Review</h4><span class="badge ${esc(change.review_action)}">${esc(change.review_action)}</span> ${esc(change.review_reason)}</div>` : ""}
+    <div class="sec"><h4>Evidence</h4><div class="change-links">${change.sources.length ? change.sources.map((id) => lineageChip(id, true)).join("") : "No source links recorded."}</div></div>
+    <div class="sec"><h4>Notes needing review</h4><div class="change-links">${impact}</div></div>`;
+}
+
+function lineageChip(id, withTitle = false) {
+  const block = S.blocks.get(id);
+  const label = withTitle && block ? ` <span>${esc(block.title)}</span>` : block ? ` <span class="hint">L${block.level}</span>` : "";
+  return `<button type="button" class="lin ${block?.stale ? "stale" : ""}" data-open="${esc(id)}">${esc(id)}${label}</button>`;
+}
 
 function lineageHTML(b) {
-  const chip = (id) => { const x = S.blocks.get(id); return `<button class="lin ${x?.stale ? "stale" : ""}" data-open="${esc(id)}">${esc(id)}${x ? ` <span class="hint">L${x.level}</span>` : ""}</button>`; };
   const from = b.sources || [], used = usedBy(b.block_id);
   if (!from.length && !used.length && !b.stale && !b.corrected) return "";
   return `<div class="sec"><h4>Lineage</h4>
     ${b.stale ? `<div class="stale-note">A block this was built from has been corrected since it was written. Agents reading it get a re-check warning.</div>` : ""}
     ${b.corrected ? `<div class="hint">Corrected; the previous version is kept in history.</div>` : ""}
-    <div class="lin-row"><span class="hint">built from</span>${from.length ? from.map(chip).join("") : '<span class="hint">nothing (original record)</span>'}</div>
-    <div class="lin-row"><span class="hint">used by</span>${used.length ? used.map(chip).join("") : '<span class="hint">no blocks yet</span>'}</div></div>`;
+    <div class="lin-row"><span class="hint">built from</span>${from.length ? from.map((id) => lineageChip(id)).join("") : '<span class="hint">nothing (original record)</span>'}</div>
+    <div class="lin-row"><span class="hint">used by</span>${used.length ? used.map((id) => lineageChip(id)).join("") : '<span class="hint">no blocks yet</span>'}</div></div>`;
 }
 
 // ------------------------------------------------------------------ HW7 panel
@@ -721,7 +818,7 @@ $$("#speedSeg button").forEach((b) => (b.onclick = () => {
 
 document.addEventListener("keydown", (e) => {
   if (e.target.matches("input, select, textarea")) return;
-  if (e.key === "Escape") $("#drawer").hidden = true;
+  if (e.key === "Escape") closeDrawer();
   if (e.key === "l" || e.key === "L") setMode("live");
   if (e.key === "r" || e.key === "R") setMode("replay");
   if (S.mode !== "replay") return;
@@ -737,6 +834,7 @@ setInterval(loadResults, 30000);
 (async function init() {
   const cfg = await (await fetch("/api/config")).json();
   S.agents = cfg.agents;
+  S.historyAvailable = cfg.history_available;
   loadResults();
   const want = new URLSearchParams(location.search).get("mode");
   setMode(want === "replay" ? "replay" : "live");

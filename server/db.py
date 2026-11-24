@@ -48,6 +48,7 @@ class Store:
         """Bring a database built before the Demo Day schema up to date (scopes, sources, agent_taint)."""
         self._drop_scope_check()
         with self._conn() as c:
+            c.execute("BEGIN IMMEDIATE")
             cols = {r["name"] for r in c.execute("PRAGMA table_info(blocks)")}
             if "sources" not in cols:
                 c.execute("ALTER TABLE blocks ADD COLUMN sources TEXT")
@@ -58,8 +59,10 @@ class Store:
                 " id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 " block_id TEXT NOT NULL REFERENCES blocks (block_id),"
                 " old_title TEXT NOT NULL, old_content TEXT NOT NULL, old_level INTEGER NOT NULL,"
-                " corrected_by TEXT NOT NULL, reason TEXT NOT NULL, corrected_at TEXT NOT NULL)"
+                " corrected_by TEXT NOT NULL, reason TEXT NOT NULL, corrected_at TEXT NOT NULL, flagged_ids TEXT)"
             )
+            if "flagged_ids" not in {r["name"] for r in c.execute("PRAGMA table_info(block_history)")}:
+                c.execute("ALTER TABLE block_history ADD COLUMN flagged_ids TEXT")
             c.execute(
                 "CREATE TABLE IF NOT EXISTS agent_taint ("
                 " agent_id TEXT PRIMARY KEY,"
@@ -177,8 +180,8 @@ class Store:
                         return None
             conn.execute(
                 "INSERT INTO block_history (block_id, old_title, old_content, old_level, corrected_by, reason, "
-                "corrected_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (block_id, old[0], old[1], old[2], corrected_by, reason, now),
+                "corrected_at, flagged_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (block_id, old[0], old[1], old[2], corrected_by, reason, now, json.dumps(flagged)),
             )
             conn.execute(
                 "UPDATE blocks SET content = ?, level = ?, status = 'unverified', review_action = ?, "
