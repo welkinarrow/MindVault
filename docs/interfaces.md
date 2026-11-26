@@ -2,10 +2,10 @@
 
 | 项目 | 内容 |
 | --- | --- |
-| 版本 | v0.9（草稿，待三人确认） |
+| 版本 | v1.0（草稿，待三人确认） |
 | 维护人 | A（Memory MCP 服务与权限） |
 | 适用范围 | HW6 MVP + HW7 benchmark 开关 |
-| 最后更新 | 2026-11-03 |
+| 最后更新 | 2026-11-26 |
 
 本文件是三人之间所有交接点的唯一约定。代码与本文件不一致时，以本文件为准，并先修改本文件。
 
@@ -536,3 +536,367 @@ SELECT block_id, accuracy FROM ratings WHERE session_id = ?;
 | v0.7 | 2026-11-02 | A | HW7：LABEL_MODE 开关（I-7）及 agent 自己定级的基线；结构化事件日志 logs/events.jsonl（I-6）；审核用量日志；RUN_ID |
 | v0.8 | 2026-11-03 | A（代为修改） | HW7：实习助手 `read_scopes` 改为 `["public", "finance"]`，级别仍为 L0，benchmark 的泄露判定只取决于写入级别（见 6.1） |
 | v0.9 | 2026-11-03 | A（代为修改） | HW7 改动：`SEARCH_MODE=titles`，关键词检索只列标题、不计入污点；正文和污点只来自按 block_id 读取（见 4.2）。默认行为不变 |
+｜v1.0 | 2026-11-26 | A | v2：内外部、预检查、内部写入走人工审批、引用与追溯、记忆管理接口（第 13 节）。
+
+---
+
+## 13. v2 变更（v1.0 草稿，11/27 三人确认）
+
+v2 只为 Demo Day 的两个场景服务：内部/外部记忆，和带来源链的记忆追溯。本节列出相对 v0.9 的全部变更；与前面各节冲突时以本节为准。确认后 A 把本节内容并回前面各节，版本号改为 v1.0。
+
+### 13.0 起点：product-lineage 已有、此前未写进本文件的改动
+
+v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码里，按 docs/proposal-taint-sources.md 第 5 节补记：
+
+- **污点按 agent 持久保存**（表 `agent_taint`）。空闲超时、服务重启都不会清零，只能用 `scripts/reset.py`（重建数据库）或 `scripts/reset_taint.py <agent_id>`（管理员）清。空闲超时仍会开始新会话；“本会话读过”这一判断（评分、引用）仍按会话算。
+- **来源**：`blocks.sources` 是 JSON 列表，记的是写入者在写入前读过的全部 block，按首次读取的顺序，跨会话累积。`memory_write` 返回 `sources`。`memory_read` 按 block_id 完整读取时带 `sources`，只列出调用者有权读的那些。
+- **修改**：新工具 `memory_correct`（说明见 docs/AGENT_GUIDE.md）。旧版本存入 `block_history`；所有基于它写出的 block 设置 `stale_since`，读取时带 `stale: true` 和提醒。
+- **范围可配置**：范围列在 `config/agents.json` 的 `scopes` 里，schema 不再检查。现有 public、finance、hr、support、release、rnd、mgmt；v2 加 `sales`。
+
+### 13.1 新增枚举
+
+**内外部（exposure）**，block 的新属性：
+
+| 值 | 含义 | 谁能读 |
+| --- | --- | --- |
+| external | 外部 | 级别和范围满足的任何 agent |
+| internal | 内部 | 级别和范围满足、且 `model_location` 为 local 的 agent |
+
+旧数据和种子文件里没写这个字段的，一律按 external。
+
+**模型位置（model_location）**，agent 的新属性：`local` 或 `cloud`。旧密钥没写的，一律按 cloud。服务只认登记的值，无法核实密钥背后实际用的是什么模型；这一点靠部署方保证。
+
+**角色（role）**，agent 的新属性：
+
+| 值 | 含义 | 能用的工具 |
+| --- | --- | --- |
+| business | 业务 agent（默认） | memory_read、memory_write、memory_correct、memory_rate、memory_cite、memory_trace |
+| manager | 记忆管理 agent | 只有 manager_fetch、manager_suggest（13.7），且 model_location 必须是 local |
+| admin | 超级管理员 | 不走 MCP，只在本机用 review_cli 操作（13.8） |
+
+**状态（status）** 新增一个值：
+
+| 值 | 中文 | 谁能读 |
+| --- | --- | --- |
+| pending | 待人工审批 | 任何 agent 都读不到，包括写入者本人；按 block_id 读取返回 NOT_FOUND，和 quarantined 一样不暴露它的存在 |
+
+管理员批准后变为 `verified`；拒绝后变为 `quarantined`，记录保留供审计。
+
+### 13.2 新增拒绝与错误代码
+
+| 代码 | 出现在 | 含义 |
+| --- | --- | --- |
+| EXPOSURE_INTERNAL | memory_read、memory_correct、memory_trace | block 是 internal，调用者的 model_location 是 cloud |
+| NOT_READ_IN_SESSION | memory_cite（沿用 memory_rate 的代码） | 引用的 block 本会话没有成功读过 |
+| TOO_MANY_CITATIONS | memory_cite | 超过 10 条 |
+| DUPLICATE_CITATION | memory_cite | 同一个 block_id 出现两次 |
+| NOT_LOCAL_MODEL | manager_fetch、manager_suggest | 调用者不是 local 的 manager 密钥 |
+| NOT_MANAGER | 同上 | 调用者是 local，但角色不是 manager |
+| NOT_PENDING | manager_suggest | 该写入不在待审状态（已处理或不存在） |
+| PRECHECK_FAILED | memory_write | 没通过预检查（13.4），返回里写明是哪条规则 |
+| NEEDS_HUMAN_REVIEW | memory_correct | 修改涉及内部内容，不发给云端审核，本版不执行（13.5） |
+
+原先计划的 NOT_READ_IN_TASK 不再新增：“本次任务”就用会话来代表，和评分用同一个判断、同一个代码。
+
+### 13.3 读取（memory_read，A 的 policy.can_read）
+
+检查顺序，前面的命中就不再往下查：
+
+1. 状态是 quarantined 或 pending → NOT_FOUND
+2. 级别不够 → LEVEL_TOO_LOW
+3. 范围不对 → SCOPE_MISMATCH
+4. block 是 internal 且调用者是 cloud → EXPOSURE_INTERNAL
+
+内外部放在最后检查，所以级别不够的内部 block 仍然返回 LEVEL_TOO_LOW，HW7–HW9 的验证器不受影响。
+
+- 按 query 检索时，cloud 调用者看不到任何 internal block，`SEARCH_MODE=titles` 下连标题也不列。日志记 `FILTERED EXPOSURE_INTERNAL`。
+- 返回的每条 block 增加 `exposure` 字段。
+- `sources` 的过滤也用同一套规则，cloud 调用者看不到 internal 来源的编号。
+- 按 block_id 读取被拒时：
+
+```json
+{
+  "denied": true,
+  "reason_code": "EXPOSURE_INTERNAL",
+  "block_id": "b-802",
+  "message": "这条记忆标为内部，只能由使用本地模型的 agent 读取。"
+}
+```
+
+### 13.4 写入（memory_write）
+
+**处理顺序（替换 4.3 的顺序）：**
+
+1. 校验参数（不变）。
+2. **预检查**（新，不调用任何模型），任一条不通过就拒绝、不入库：
+   - 长度：title 1–100、content 1–2000 字符（不变）。
+   - 频率：同一 agent 每分钟最多 `WRITE_RATE_PER_MIN` 次（默认 6）。
+   - 注入：内容里出现要求读者执行操作的模式（如“忽略之前的指令”“ignore previous instructions”“你现在是”），模式表放在 `server/precheck.py`，可增补。
+   - 凭据：内容像密钥、密码或令牌（如 `sk-` 开头的长串、`password=`、32 位以上的十六进制串）。
+   - 完全重复：标题加正文规范化后的哈希，和已有 block 相同。
+3. **默认标签：** `level` = 污点的最高级别；`scope` = agent 的 write_scope；`exposure` = 污点里读过任何 internal 就是 internal，否则 external。cloud agent 读不到 internal，所以它写出的一定是 external。
+4. **分流：**
+   - **external：** 和 v0.9 完全一样：选上下文、调用云端审核函数、按 action 处理。
+   - **internal：** **不调用审核函数**，不向云端发送任何内容。直接以 `pending` 存入，等记忆管理 agent 出建议、管理员审批（13.7、13.8）。
+
+**返回（internal）：**
+
+```json
+{
+  "block_id": "w-0012",
+  "level": 1,
+  "scope": "sales",
+  "exposure": "internal",
+  "level_basis": "session_max_read",
+  "status": "pending",
+  "sources": ["b-601", "b-602", "b-603"],
+  "review": null,
+  "message": "这条写入包含内部内容，已进入人工审批，批准前任何 agent 都读不到。"
+}
+```
+
+**返回（预检查没通过）：**
+
+```json
+{
+  "block_id": null,
+  "status": null,
+  "error": {"code": "PRECHECK_FAILED", "rule": "injection", "message": "内容包含要求读者执行操作的语句。"}
+}
+```
+
+`rule` 取值：`length`、`rate`、`injection`、`credential`、`duplicate`。
+
+**待确认 Q-6（来源怎么记）：** 现在 `sources` 是 agent 读过的全部 block，跨会话累积。要让 b-610 的来源链正好是 b-601–b-603，有两种做法：
+- (a) memory_write 增加可选参数 `sources`，像 memory_correct 一样由 agent 显式传入，服务核对这些 block 本会话读过；不传时保持现在的自动记录。
+- (b) 不改接口，每个场景开始前对该 agent 跑 reset_taint。
+
+未确认时按 (b) 做。
+
+### 13.5 修改（memory_correct）
+
+- can_correct 会先调用 can_read，所以 cloud agent 改不了 internal block，返回 EXPOSURE_INTERNAL。
+- **待确认 Q-7（内部内容不外发）：** 现在的修改会把原 block、新内容，以及相关、引用、历史 block 一起交给云端审核函数。未确认时按以下做：被修改的 block 是 internal，或调用者读过 internal，就**不调用审核函数**，直接返回 `{"applied": false, "reason_code": "NEEDS_HUMAN_REVIEW"}`。内部修改走人工审批放到 Demo Day 之后（P2）。
+
+### 13.6 引用与追溯（memory_cite、memory_trace，新工具）
+
+**memory_cite**：回答结束前，agent 提交这次回答引用的记忆，按重要性从高到低。
+
+**工具描述：**
+
+> 回答结束前调用一次，提交这次回答引用的记忆编号，按重要性从高到低，最多 10 条。只能引用本次会话里读过全文的记忆。可以同时提交回答正文，便于以后追溯。
+
+| 参数 | 类型 | 必填 | 约束 |
+| --- | --- | --- | --- |
+| block_ids | string 数组 | 是 | 1–10 个，不重复，按重要性排序 |
+| answer | string | 否 | 回答正文，1–4000 字符 |
+
+服务调用 `policy.check_citations`：数量、是否重复、是否都在本会话读过的集合里，并且调用者现在仍然有权读。全部通过才保存（表 `citations`、`citation_items`），保留顺序。
+
+```json
+{"answer_id": "c-0007", "citations": ["b-602", "b-603", "b-601"]}
+```
+
+失败时不保存任何一条：
+
+```json
+{"answer_id": null, "error": {"code": "NOT_READ_IN_SESSION", "block_ids": ["b-605"]}}
+```
+
+**memory_trace**：查看一次回答或一条记忆的来龙去脉。
+
+| 参数 | 类型 | 必填 | 约束 |
+| --- | --- | --- | --- |
+| answer_id | string | 与 block_id 二选一 | memory_cite 返回的编号 |
+| block_id | string | 与 answer_id 二选一 | 已存在的 block |
+
+- 按 answer_id 查：只有提交这次引用的 agent 能查，其他 agent 返回 NOT_FOUND。
+- 按 block_id 查：调用者必须能读这个 block，否则返回和 memory_read 一样的拒绝。
+- 沿 `sources` 往上追，最多 3 层、最多 30 个 block。
+- 调用者无权读的 block 不出现在 `blocks` 里，编号也不出现，只计入 `hidden_sources`。
+
+**返回格式（字段定下来后不再改；A5 的追溯视图和 B 的 T9 都按它写）：**
+
+```json
+{
+  "answer_id": "c-0007",
+  "agent": "zhou-local",
+  "answer": "85 折是 2024 年故障后的补偿折扣，到 2026 年底到期 [b-602]……",
+  "citations": [
+    {"rank": 1, "block_id": "b-602"},
+    {"rank": 2, "block_id": "b-603"},
+    {"rank": 3, "block_id": "b-601"}
+  ],
+  "blocks": {
+    "b-602": {
+      "title": "客户 B 故障补偿折扣",
+      "author": "li",
+      "created_at": "2024-09-03T00:00:00Z",
+      "level": 1, "scope": "sales", "exposure": "internal",
+      "status": "verified",
+      "stale": false,
+      "approved_by": null,
+      "approved_at": null,
+      "sources": []
+    }
+  },
+  "hidden_sources": 0
+}
+```
+
+- 按 block_id 查时，`answer_id`、`answer`、`citations` 为 null，`root` 字段给出所查的 block_id。
+- `approved_by` 和 `approved_at` 来自审批记录（13.8）。种子数据和经云端审核入库的写入为 null。
+- `citations` 里只放编号和排序，内容统一放在 `blocks` 里，便于网页按编号连线。
+
+**提醒（影响 A5 和 T9 的写法）：** cloud 调用者读不到 b-610（internal），所以它查 b-610 的追溯得到的是 EXPOSURE_INTERNAL 拒绝，而不是一份“来源已隐藏”的链条。“已隐藏 N 条”只会出现在调用者能读这条 block、但读不了它的部分来源时；在两个场景里，只有经管理员批准降级为 external 的那两条降级样本属于这种情况。所以两个视角对比要用降级样本来演示，T9 里“云端密钥看到已隐藏”的断言也要改用降级样本。
+
+### 13.7 记忆管理 agent 的两个接口（新工具，只对 local 的 manager 密钥开放）
+
+**manager_fetch**：取一条待审的内部写入。无参数。按写入时间取最早的一条，没有则返回 `{"pending_id": null}`。
+
+```json
+{
+  "pending_id": "w-0012",
+  "title": "客户 B 2027 年续约",
+  "content": "……",
+  "writer": "zhou-local",
+  "default_label": {"level": 1, "scope": "sales", "exposure": "internal"},
+  "writer_reads": [
+    {"block_id": "b-602", "title": "……", "content": "……", "level": 1, "scope": "sales", "exposure": "internal"}
+  ],
+  "related": [
+    {"block_id": "b-604", "title": "……", "content": "……", "level": 1, "scope": "sales", "exposure": "internal"}
+  ]
+}
+```
+
+- `writer_reads`：写入时记下的 `sources`（如果按 Q-6 的 (a) 显式传入，就是传入的那些）。
+- `related`：用标题加正文按 4.2 的规则检索，最多 5 条，不包括 `writer_reads` 里已有的。
+- manager 密钥按设计可以看到所有待审写入及其材料，不受级别和范围限制；这正是只对 local 开放的原因。
+
+**manager_suggest**：对一条待审写入提交三个小问题的答案。
+
+| 参数 | 类型 | 必填 | 约束 |
+| --- | --- | --- | --- |
+| pending_id | string | 是 | 处于 pending 的写入 |
+| keep | boolean | 是 | 是否值得保存 |
+| keep_reason | string | 是 | 1–200 字符 |
+| relation | string | 是 | `none`、`duplicate` 或 `conflict` |
+| related_ids | string 数组 | relation 不是 none 时必填 | 必须来自 fetch 返回的 related 或 writer_reads |
+| relation_reason | string | 否 | 1–200 字符 |
+| downgrade | object 或 null | 否 | 见下 |
+
+```json
+"downgrade": {
+  "label": {"level": 0, "scope": "sales", "exposure": "external"},
+  "evidence": [
+    {"sentence": "写入中的一句原话", "block_id": "b-801", "snippet": "该 block 原文里的一段"}
+  ]
+}
+```
+
+服务调用 `policy.check_downgrade`，按顺序检查：建议标签不高于默认标签；写入的每一句都有证据；每个 snippet 去掉多余空白后是所引 block 原文的一部分；所引 block 都在 `writer_reads` 里；用所引 block 算出的标签（级别取最高，有一条 internal 就是 internal）等于建议标签。任何一条不通过，这条降级建议作废，但 keep 和 relation 的答案照常保存。
+
+```json
+{"suggestion_id": "s-0003", "downgrade_check": "void", "check_reason": "第 2 句的片段不在 b-801 原文里", "computed_label": null}
+```
+
+`downgrade_check` 取值：`none`（没有提降级）、`passed`、`void`。通过时 `computed_label` 是代码算出的标签。建议本身不改变任何 block，要等管理员审批。
+
+### 13.8 管理员审批（review_cli，不走 MCP）
+
+- 管理员在本机运行 `scripts/review_cli.py`，它在进程内调用服务的 `decide()`，不开放任何网络接口。
+- 列表显示每条 pending：内容、默认标签、建议标签（降级单独标出）、核对结果、keep 和 relation 的答案。
+- 三种决定：`approve`（按默认标签放行，状态改为 verified）、`approve_downgrade`（按 `computed_label` 放行，只有 `downgrade_check` 为 passed 时可选）、`reject`（状态改为 quarantined）。
+- 每次决定写入表 `approvals`：`block_id`、`decision`、`label_before`、`label_after`、`suggestion_id`、`decided_by`、`decided_at`。memory_trace 的 `approved_by` 和 `approved_at` 从这里取。
+
+### 13.9 配置与表结构
+
+**config/agents.json** 每个 agent 增加两个字段（缺省值见 13.1）：
+
+```json
+{"agent_id": "zhou-local", "key": "<gen_keys.py 生成>", "level": 1, "read_scopes": ["public", "sales"], "write_scope": "sales", "model_location": "local", "role": "business"}
+```
+
+**schema.sql 变更：**
+
+```sql
+ALTER TABLE blocks ADD COLUMN exposure TEXT NOT NULL DEFAULT 'external'
+    CHECK (exposure IN ('internal', 'external'));
+-- status 的 CHECK 加上 'pending'（SQLite 改 CHECK 需要重建表，沿用 db.py 里 _drop_scope_check 的做法）
+ALTER TABLE agent_taint ADD COLUMN internal_read INTEGER NOT NULL DEFAULT 0
+    CHECK (internal_read IN (0, 1));
+
+CREATE TABLE citations (
+    answer_id   TEXT PRIMARY KEY,          -- c-0001 起
+    agent_id    TEXT NOT NULL,
+    session_id  TEXT NOT NULL,
+    answer      TEXT,
+    created_at  TEXT NOT NULL
+);
+CREATE TABLE citation_items (
+    answer_id   TEXT NOT NULL REFERENCES citations (answer_id),
+    rank        INTEGER NOT NULL CHECK (rank BETWEEN 1 AND 10),
+    block_id    TEXT NOT NULL REFERENCES blocks (block_id),
+    PRIMARY KEY (answer_id, rank)
+);
+CREATE TABLE suggestions (
+    suggestion_id   TEXT PRIMARY KEY,      -- s-0001 起
+    block_id        TEXT NOT NULL REFERENCES blocks (block_id),
+    manager_id      TEXT NOT NULL,
+    keep            INTEGER NOT NULL,
+    keep_reason     TEXT NOT NULL,
+    relation        TEXT NOT NULL CHECK (relation IN ('none', 'duplicate', 'conflict')),
+    related_ids     TEXT,                  -- JSON 列表
+    relation_reason TEXT,
+    downgrade       TEXT,                  -- JSON，原样保存
+    downgrade_check TEXT NOT NULL CHECK (downgrade_check IN ('none', 'passed', 'void')),
+    check_reason    TEXT,
+    computed_label  TEXT,                  -- JSON
+    created_at      TEXT NOT NULL
+);
+CREATE TABLE approvals (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    block_id      TEXT NOT NULL REFERENCES blocks (block_id),
+    decision      TEXT NOT NULL CHECK (decision IN ('approve', 'approve_downgrade', 'reject')),
+    label_before  TEXT NOT NULL,           -- JSON
+    label_after   TEXT,                    -- JSON；reject 时为 null
+    suggestion_id TEXT REFERENCES suggestions (suggestion_id),
+    decided_by    TEXT NOT NULL,
+    decided_at    TEXT NOT NULL
+);
+```
+
+**种子文件**每条 block 可以带 `author`、`created_at`、`exposure`，没写的分别按 `seed`、reset 的时间、`external`。两个场景各用一个种子文件，通过 `SEED_FILE` 选择。
+
+### 13.10 日志
+
+- READ 行可以出现 `FILTERED EXPOSURE_INTERNAL` 和 `DENY EXPOSURE_INTERNAL`。
+- WRITE 行末尾加 `exposure=internal route=human`，或 `exposure=external route=reviewer`；预检查没通过时为 `PRECHECK_FAILED rule=injection`。
+- 新事件：`CITE`（answer_id、引用列表，或失败代码）、`TRACE`（查询对象、hidden 数量）、`SUGGEST`（pending_id、downgrade_check）、`DECIDE`（block_id、decision、label_before → label_after）。
+- events.jsonl 的 WRITE 增加 `exposure`、`route`；新事件的字段与文本日志一致。
+- **内部内容不外发的检查依据：** internal 写入和 13.5 里不走审核的修改，在 `logs/review_usage.jsonl` 里都不能产生任何一行。
+
+### 13.11 新增行为约定（接第 9 节）
+
+6. **内外部：** cloud agent 读不到任何 internal block，按 query 检索也看不到它的标题和编号。
+7. **内外部随写入传播：** agent 读过任何 internal 内容，之后写出的默认就是 internal，直到管理员清除污点。
+8. **不外发：** internal 写入和内部修改不调用审核函数；审批前任何 agent 都读不到。
+9. **引用：** 最多 10 条、不重复、都在本会话读过；不满足就整组拒绝。
+10. **建议不生效：** 记忆管理 agent 的建议不改变任何 block；只有管理员的决定能改变状态和标签，且降级标签只能是代码算出的 `computed_label`。
+
+### 13.12 新增环境变量
+
+| 变量 | 默认值 | 使用方 |
+| --- | --- | --- |
+| WRITE_RATE_PER_MIN | 6 | 服务：预检查的写入频率上限 |
+| MANAGER_RELATED_LIMIT | 5 | 服务：manager_fetch 的 related 最多几条 |
+
+### 13.13 待确认
+
+| 编号 | 问题 | 负责 | 未确认时的默认做法 |
+| --- | --- | --- | --- |
+| Q-6 | memory_write 是否像 memory_correct 一样显式传 sources | C | 不改接口，每个场景前 reset_taint |
+| Q-7 | 内部修改是否走人工审批 | C | 不调用审核函数，返回 NEEDS_HUMAN_REVIEW，人工审批修改放到 Demo Day 之后 |
+| Q-8 | 预检查的注入和凭据模式表由谁维护 | B | B 维护 `server/precheck.py` 里的模式表，C 负责接入 |
+| Q-9 | “已隐藏 N 条”用降级样本演示，T9 和 A5 的写法随之调整 | A、B | 按 13.6 的提醒执行 |
