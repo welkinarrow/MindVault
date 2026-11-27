@@ -108,7 +108,8 @@ async def main() -> int:
     try:
         async with Agent(url, keys["finance"]) as finance:
             names = await finance.tool_names()
-            check(names == {"memory_read", "memory_write", "memory_rate"}, f"只看到 3 个 memory 工具：{sorted(names)}")
+            # product-lineage 加了 memory_correct，v2 还会加 memory_cite 等，所以只检查基本的三个都在
+            check({"memory_read", "memory_write", "memory_rate"} <= names, f"基本工具都在：{sorted(names)}")
 
             r = await finance.call("memory_read", {"query": q["main"]})
             found = {b["block_id"] for b in r.get("results", [])}

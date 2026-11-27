@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from server.policy import MODEL_LOCATIONS, ROLES
+
 ROOT = Path(__file__).resolve().parent.parent
 
 # Used when agents.json has no "scopes" list (every config written before scopes were configurable).
@@ -138,6 +140,11 @@ def validate_agents(agents: list[dict], scopes: set[str], check_keys: bool = Tru
             raise ConfigError(f"{aid}: read_scopes not declared in scopes: {unknown}")
         if a.get("write_scope") not in scopes:
             raise ConfigError(f"{aid}: write_scope {a.get('write_scope')!r} not declared in scopes")
+        # v2（interfaces.md 13.1）：没写按 cloud / business；写了就必须是合法取值，拼错时启动即报错
+        if "model_location" in a and a["model_location"] not in MODEL_LOCATIONS:
+            raise ConfigError(f"{aid}: model_location 必须是 {' 或 '.join(MODEL_LOCATIONS)}，收到 {a['model_location']!r}")
+        if "role" in a and a["role"] not in ROLES:
+            raise ConfigError(f"{aid}: role 必须是 {'、'.join(ROLES)} 之一，收到 {a['role']!r}")
         ids.add(aid)
         keys.add(key)
 

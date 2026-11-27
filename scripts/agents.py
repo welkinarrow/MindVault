@@ -3,6 +3,8 @@
     python scripts/agents.py list                                  # agents and scopes, never keys
     python scripts/agents.py add-scope legal                       # declare a new scope
     python scripts/agents.py add counsel --level 2 --read public,legal --write legal
+    python scripts/agents.py add zhou-local --level 1 --read public,sales --write sales --model-location local
+    python scripts/agents.py add manager-local --level 0 --read public --write public --model-location local --role manager
     python scripts/agents.py new-key counsel                       # replace one agent's key
     python scripts/agents.py remove counsel
 
@@ -21,6 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from server.config import DEFAULT_SCOPES, ConfigError, scopes_from, validate_agents  # noqa: E402
+from server.policy import MODEL_LOCATIONS, ROLES  # noqa: E402
 
 NEW_FILE = {"scopes": ["public"], "agents": []}
 
@@ -60,6 +63,10 @@ def main() -> None:
     p.add_argument("--level", type=int, required=True, choices=(0, 1, 2, 3))
     p.add_argument("--read", required=True, help="comma-separated scopes the agent may read")
     p.add_argument("--write", required=True, help="the one scope its writes go to")
+    p.add_argument("--model-location", choices=MODEL_LOCATIONS, default="cloud",
+                   help="where the agent's model runs; only local agents may read internal memory (default cloud)")
+    p.add_argument("--role", choices=ROLES, default="business",
+                   help="business (default), manager (memory manager tools only) or admin")
     for name in ("new-key", "remove"):
         sub.add_parser(name).add_argument("agent_id")
     args = parser.parse_args()
@@ -74,7 +81,7 @@ def main() -> None:
             print("scopes: " + ", ".join(config["scopes"]))
             for a in config["agents"]:
                 print(f"  {a['agent_id']:<14} L{a['level']}  read={','.join(a['read_scopes'])}  "
-                      f"write={a['write_scope']}")
+                      f"write={a['write_scope']}  {a.get('model_location', 'cloud')}  {a.get('role', 'business')}")
             return
         if args.cmd == "add-scope":
             if args.name in config["scopes"]:
@@ -90,7 +97,7 @@ def main() -> None:
             config["agents"].append({
                 "agent_id": args.agent_id, "key": key, "level": args.level,
                 "read_scopes": [s.strip() for s in args.read.split(",") if s.strip()],
-                "write_scope": args.write,
+                "write_scope": args.write, "model_location": args.model_location, "role": args.role,
             })
             save(path, config)
             print(f"added {args.agent_id}. Key (shown once, hand it over privately):\n{key}")

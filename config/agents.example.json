@@ -6,7 +6,8 @@
     "support",
     "release",
     "rnd",
-    "mgmt"
+    "mgmt",
+    "sales"
   ],
   "agents": [
     {
@@ -57,6 +58,64 @@
         "hr"
       ],
       "write_scope": "public"
+    },
+    {
+      "agent_id": "wang-cloud",
+      "key": "<run scripts/gen_keys.py>",
+      "level": 1,
+      "read_scopes": [
+        "public",
+        "rnd"
+      ],
+      "write_scope": "rnd",
+      "model_location": "cloud",
+      "role": "business"
+    },
+    {
+      "agent_id": "wang-local",
+      "key": "<run scripts/gen_keys.py>",
+      "level": 1,
+      "read_scopes": [
+        "public",
+        "rnd"
+      ],
+      "write_scope": "rnd",
+      "model_location": "local",
+      "role": "business"
+    },
+    {
+      "agent_id": "zhou-local",
+      "key": "<run scripts/gen_keys.py>",
+      "level": 1,
+      "read_scopes": [
+        "public",
+        "sales"
+      ],
+      "write_scope": "sales",
+      "model_location": "local",
+      "role": "business"
+    },
+    {
+      "agent_id": "manager-local",
+      "key": "<run scripts/gen_keys.py>",
+      "level": 0,
+      "read_scopes": [
+        "public"
+      ],
+      "write_scope": "public",
+      "model_location": "local",
+      "role": "manager"
+    },
+    {
+      "agent_id": "manager-cloud",
+      "key": "<run scripts/gen_keys.py>",
+      "level": 0,
+      "read_scopes": [
+        "public"
+      ],
+      "write_scope": "public",
+      "model_location": "cloud",
+      "role": "manager"
     }
   ]
 }
