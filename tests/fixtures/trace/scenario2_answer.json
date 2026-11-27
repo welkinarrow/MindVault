@@ -1,0 +1,65 @@
+{
+  "answer_id": "c-0007",
+  "agent": "zhou-local",
+  "root": null,
+  "answer": "85 折是 2024 年故障后的补偿折扣，到 2026 年底到期 [b-602]，所以续约可以恢复原价。例外是：如果采购量比上年增加 30%，按补充协议要继续给 85 折 [b-603]。最初的 8 折签约优惠已经不再适用 [b-601]。建议先核对客户 B 今年的采购量。",
+  "citations": [
+    {
+      "rank": 1,
+      "block_id": "b-602"
+    },
+    {
+      "rank": 2,
+      "block_id": "b-603"
+    },
+    {
+      "rank": 3,
+      "block_id": "b-601"
+    }
+  ],
+  "blocks": {
+    "b-601": {
+      "title": "客户 B 首年签约优惠",
+      "author": "王经理（销售，已离职）",
+      "created_at": "2023-05-10T09:00:00Z",
+      "level": 1,
+      "scope": "sales",
+      "exposure": "internal",
+      "status": "verified",
+      "stale": false,
+      "approved_by": null,
+      "approved_at": null,
+      "sources": [],
+      "content": "为了从竞品手里抢下客户 B，首年给了 8 折。"
+    },
+    "b-602": {
+      "title": "客户 B 故障补偿折扣",
+      "author": "李经理（客户成功，已离职）",
+      "created_at": "2024-09-03T09:00:00Z",
+      "level": 1,
+      "scope": "sales",
+      "exposure": "internal",
+      "status": "verified",
+      "stale": false,
+      "approved_by": null,
+      "approved_at": null,
+      "sources": [],
+      "content": "客户 B 遇到严重故障，作为补偿改为 85 折，到 2026 年底到期。"
+    },
+    "b-603": {
+      "title": "客户 B 补充协议",
+      "author": "赵律师（法务，已离职）",
+      "created_at": "2025-03-18T09:00:00Z",
+      "level": 1,
+      "scope": "sales",
+      "exposure": "internal",
+      "status": "verified",
+      "stale": false,
+      "approved_by": null,
+      "approved_at": null,
+      "sources": [],
+      "content": "补充协议：续约时采购量比上年增加 30%，可继续保持 85 折。"
+    }
+  },
+  "hidden_sources": 0
+}
