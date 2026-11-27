@@ -15,3 +15,6 @@ venv/
 # macOS / 编辑器
 .DS_Store
 .vscode/
+
+# local_agent.py 的转录，可能含内部内容
+runs/
