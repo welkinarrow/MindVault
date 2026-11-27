@@ -120,12 +120,12 @@ def card(block_id: str, b: dict, t: dict, root: bool = False) -> str:
               f'<span class="b {esc(exposure)}">{esc(t.get(exposure, exposure))}</span>']
     if b.get("stale"):
         badges.append(f'<span class="b stale">{t["stale"]}</span>')
-    approved = (f'<div class="meta">{esc(t["approved"].format(who=b["approved_by"], when=b.get("approved_at", "")[:16].replace("T", " ")))}</div>'
+    approved = (f'<div class="meta">{esc(t["approved"].format(who=b["approved_by"], when=(b.get("approved_at") or "")[:16].replace("T", " ")))}</div>'
                 if b.get("approved_by") else "")
     content = f'<p class="content">{esc(b["content"])}</p>' if b.get("content") else ""
     return (f'<div class="card{" root" if root else ""}" id="card-{esc(block_id)}" data-ref="{esc(block_id)}">'
             f'<div class="id">{esc(block_id)}</div><h3>{esc(b.get("title", ""))}</h3>'
-            f'<div class="meta">{esc(b.get("author", ""))} · {esc(str(b.get("created_at", ""))[:10])}</div>'
+            f'<div class="meta">{esc(b.get("author", ""))} · {esc((b.get("created_at") or "")[:10])}</div>'
             f'{content}{approved}<div class="badges">{"".join(badges)}</div></div>')
 
 
@@ -136,7 +136,7 @@ def render(answer: dict | None, block: dict | None, lang: str = "zh", viewer: st
     hidden = max((answer or {}).get("hidden_sources", 0), (block or {}).get("hidden_sources", 0))
     viewer = viewer or (answer or block or {}).get("agent", "")
 
-    left = sorted((i for i in blocks if i != root_id), key=lambda i: str(blocks[i].get("created_at", "")))
+    left = sorted((i for i in blocks if i != root_id), key=lambda i: blocks[i].get("created_at") or "")
     cols = [f'<section class="col"><h2>{t["memories"]}</h2>'
             + "".join(card(i, blocks[i], t) for i in left)
             + (f'<div class="hidden">{esc(t["hidden"].format(n=hidden))}</div>' if hidden else "") + "</section>"]

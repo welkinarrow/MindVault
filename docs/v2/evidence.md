@@ -19,6 +19,7 @@ next to them, not from memory. Transcripts in `runs/` may hold internal content:
 | Citations: at most 10, no duplicates, only memories read in the session | T8 | TODO |
 | Source chains are recorded and filtered by permission when traced | T9, scenario 2 | TODO |
 | Memory manager suggestions change nothing until approved; downgrades must pass the code check | T10 | TODO |
+| The rule pre-check stops injection, credentials and exact duplicates before any review | T11 | TODO |
 | The local 8B model judges well enough to be useful, and never causes a wrong downgrade | Evaluation (section 3) | TODO |
 | HW7–HW9 behaviour still holds | `scripts/verify.py` (T1–T5), unit tests | TODO |
 
@@ -28,7 +29,7 @@ Run after `reset.py` with the scenario 1 seeds and the service started:
 
 ```bash
 python -m unittest discover -s tests      # unit tests, no model or service
-python scripts/run_tests.py               # T6–T10
+python scripts/run_tests.py               # T6–T11
 python scripts/verify.py                  # T1–T5, after the finance demo
 ```
 
@@ -36,7 +37,7 @@ python scripts/verify.py                  # T1–T5, after the finance demo
 | --- | --- | --- | --- | --- | --- |
 | Unit tests | TODO | TODO | TODO | — | |
 | T1–T5 (`verify.py`) | TODO | TODO | TODO | — | |
-| T6, T7, T10 (A) | TODO | TODO | TODO | TODO | T7's control row must PASS (LLM key set), or "usage unchanged" proves nothing |
+| T6, T7, T10, T11 (A) | TODO | TODO | TODO | TODO | T7's control row must PASS (LLM key set), or "usage unchanged" proves nothing |
 | T8, T9 (B) | TODO | TODO | TODO | TODO | |
 
 Paste the full `run_tests.py` output into `docs/v2/evidence/run_tests.txt`.

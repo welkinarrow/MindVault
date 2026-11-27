@@ -131,7 +131,7 @@ steps are in [`docs/v2/demo-runbook.md`](docs/v2/demo-runbook.md).
 | Lightweight local agent | `python scripts/local_agent.py --agent zhou-local --trace "<question>"` | Four tools (search, read, write, cite); `--trace` opens the trace view after answering |
 | Scripted fallback client | `python scripts/scripted_client.py scenario1` (or `scenario2 [--write]`) | No model: fixed tool calls against the real service |
 | Trace view | `python scripts/trace_view.py --agent zhou-local --answer c-0007 --block b-610` | Static HTML from `memory_trace`; mocks in `tests/fixtures/trace/` |
-| End-to-end tests T6–T10 | `python scripts/run_tests.py` | Needs v2 service, scenario 1 seeds and the demo agents; T1–T5 remain `scripts/verify.py` |
+| End-to-end tests T6–T11 | `python scripts/run_tests.py` | Needs v2 service, scenario 1 seeds and the demo agents; T1–T5 remain `scripts/verify.py` |
 | Memory manager evaluation | `python eval/run_eval.py --judge <module:function> --cases <dir>` | Pass bar in `eval/criteria.md`, committed before running |
 | Unit tests | `python -m unittest discover -s tests` | No model or service needed |
 

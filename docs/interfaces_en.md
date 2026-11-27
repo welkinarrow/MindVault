@@ -602,6 +602,8 @@ On approval it becomes `verified`; on rejection it becomes `quarantined` and is 
 
 The previously planned NOT_READ_IN_TASK is dropped: the session stands in for "this task", so citations use the same check and code as ratings.
 
+**Shape of refusals (added 11/27):** tool-level refusals (ROLE_NOT_ALLOWED, NOT_LOCAL_MODEL, NOT_MANAGER, NOT_PENDING, PRECHECK_FAILED) return `{"error": {"code": "…", "message": "…"}}`, like the parameter errors in 4.1; PRECHECK_FAILED also carries `rule`. Refusals about a specific block (EXPOSURE_INTERNAL and the like) keep the `{"denied": true, "reason_code": …}` shape of 4.2. `scripts/run_tests.py` accepts both.
+
 ### 13.3 Reads (memory_read, A's policy.can_read)
 
 Checks in order; the first match wins:
@@ -926,6 +928,6 @@ All permission checks live in `server/policy.py`; the service only calls them at
 | `can_correct(agent, block)` | Same | memory_correct; same call as before |
 | `default_label(agent, taint_level, internal_read)` | `{level, scope, exposure}` | memory_write default label; `internal_read` comes from the new agent_taint column |
 | `can_manage(agent)` | None, or NOT_LOCAL_MODEL / NOT_MANAGER | manager_fetch, manager_suggest (already covered by can_use_tool) |
-| `check_citations(agent, block_ids, session_reads, blocks)` | `(None, [])` or `(reason code, offending IDs)` | memory_cite; `session_reads` is the session's read_block_ids |
-| `check_downgrade(default, downgrade, content, writer_reads)` | `(none/passed/void, reason, computed_label)` | manager_suggest; store computed_label only when passed |
+| `check_citations(agent, block_ids, session_reads, blocks)` | `(None, [])` or `(reason code, offending IDs)` | memory_cite; `session_reads` is the session's read_block_ids; `blocks` may be a list or a dict |
+| `check_downgrade(default, downgrade, content, writer_reads)` | `(none/passed/void, reason, computed_label)` | manager_suggest; store computed_label only when passed. `writer_reads` may be a block list as returned by manager_fetch or a `{block_id: block}` dict |
 | `label_at_most(label, ceiling)` | bool | Whenever two labels need comparing |

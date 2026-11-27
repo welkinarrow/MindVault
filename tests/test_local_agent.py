@@ -145,6 +145,13 @@ class TestLoop(unittest.TestCase):
             run(replies, mcp, max_steps=3)
 
 
+class TestRunTool(unittest.TestCase):
+    def test_cite_ids_given_as_string(self):
+        mcp = FakeMCP({"memory_cite": {"answer_id": "c-1", "citations": ["b-602", "b-603"]}})
+        asyncio.run(local_agent.run_tool(mcp, "memory_cite", {"block_ids": "b-602，b-603"}))
+        self.assertEqual(mcp.calls, [("memory_cite", {"block_ids": ["b-602", "b-603"]})])
+
+
 class TestOpenTrace(unittest.TestCase):
     def test_no_answer_id(self):
         with redirect_stdout(io.StringIO()) as out:

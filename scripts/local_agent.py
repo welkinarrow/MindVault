@@ -77,7 +77,10 @@ async def run_tool(mcp: Agent, name: str, args: dict) -> dict:
         if name == "memory_write":
             return await mcp.call("memory_write", {"title": str(args["title"]), "content": str(args["content"])})
         if name == "memory_cite":
-            cite = {"block_ids": list(args["block_ids"])}
+            ids = args["block_ids"]
+            if isinstance(ids, str):   # 小模型偶尔把列表写成 "b-602, b-603"，不要拆成单个字符
+                ids = [i.strip() for i in ids.replace("，", ",").split(",") if i.strip()]
+            cite = {"block_ids": list(ids)}
             if args.get("answer"):
                 cite["answer"] = str(args["answer"])
             return await mcp.call("memory_cite", cite)

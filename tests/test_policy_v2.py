@@ -334,6 +334,18 @@ class TestCheckDowngrade(unittest.TestCase):
         self.assertIn("Sentence 2", reason)
 
 
+class TestListInputs(unittest.TestCase):
+    """manager_fetch 返回的 writer_reads 是列表，服务直接传进来也要能用。"""
+
+    def test_check_downgrade_accepts_list(self):
+        result = check_downgrade(DEFAULT, GOOD, CONTENT, list(READS.values()))
+        self.assertEqual(result[0], "passed")
+
+    def test_check_citations_accepts_list(self):
+        blocks = [block("b-601", exposure="internal"), block("b-602", exposure="internal")]
+        self.assertEqual(check_citations(LOCAL, ["b-602", "b-601"], {"b-601", "b-602"}, blocks), (None, []))
+
+
 class TestSplitSentences(unittest.TestCase):
     def test_chinese_and_english(self):
         self.assertEqual(split_sentences("客户 B 续约。采购量增加 35%！\nUse v2. Version 2.5 ships"),

@@ -600,6 +600,8 @@ v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码�
 
 原先计划的 NOT_READ_IN_TASK 不再新增：“本次任务”就用会话来代表，和评分用同一个判断、同一个代码。
 
+**拒绝的返回形状（11/27 补）：** 工具级的拒绝（ROLE_NOT_ALLOWED、NOT_LOCAL_MODEL、NOT_MANAGER、NOT_PENDING、PRECHECK_FAILED）和 4.1 的参数错误一样，返回 `{"error": {"code": "…", "message": "…"}}`，PRECHECK_FAILED 另带 `rule`。针对某条 block 的拒绝（EXPOSURE_INTERNAL 等）沿用 4.2 的 `{"denied": true, "reason_code": …}`。`scripts/run_tests.py` 两种都认。
+
 ### 13.3 读取（memory_read，A 的 policy.can_read）
 
 检查顺序，前面的命中就不再往下查：
@@ -924,6 +926,6 @@ CREATE TABLE approvals (
 | `can_correct(agent, block)` | 同上 | memory_correct，调用方式不变 |
 | `default_label(agent, taint_level, internal_read)` | `{level, scope, exposure}` | memory_write 定默认标签；`internal_read` 来自 agent_taint 新加的列 |
 | `can_manage(agent)` | None 或 NOT_LOCAL_MODEL / NOT_MANAGER | manager_fetch、manager_suggest（can_use_tool 已经包含，可不重复调用） |
-| `check_citations(agent, block_ids, session_reads, blocks)` | `(None, [])` 或 `(原因码, 出问题的编号)` | memory_cite；`session_reads` 是会话的 read_block_ids |
-| `check_downgrade(default, downgrade, content, writer_reads)` | `(none/passed/void, 理由, computed_label)` | manager_suggest；只有 passed 时保存 computed_label |
+| `check_citations(agent, block_ids, session_reads, blocks)` | `(None, [])` 或 `(原因码, 出问题的编号)` | memory_cite；`session_reads` 是会话的 read_block_ids；`blocks` 是列表或 dict 都可以 |
+| `check_downgrade(default, downgrade, content, writer_reads)` | `(none/passed/void, 理由, computed_label)` | manager_suggest；只有 passed 时保存 computed_label。`writer_reads` 传 manager_fetch 那样的 block 列表或 `{block_id: block}` 都可以 |
 | `label_at_most(label, ceiling)` | bool | 需要比较两个标签时 |

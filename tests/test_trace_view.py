@@ -74,6 +74,13 @@ class TestRender(unittest.TestCase):
         self.assertNotIn("<img", page)
         self.assertIn("&lt;script&gt;", page)
 
+    def test_null_dates(self):
+        trace = load("scenario2_b610.json")
+        trace["blocks"]["b-610"]["approved_at"] = None
+        trace["blocks"]["b-601"]["created_at"] = None
+        page = trace_view.render(None, trace)
+        self.assertIn("审批：admin", page)
+
     def test_english(self):
         page = trace_view.render(None, load("downgrade_cloud.json"), lang="en")
         self.assertIn("1 source(s) hidden", page)

@@ -20,6 +20,13 @@ MAX_CITATIONS = 10
 MIN_SNIPPET = 4                               # 降级证据片段的最短长度（去掉空白后），防止用“的”“是”凑数
 
 
+def by_id(blocks) -> dict:
+    """block_id → block。接受 dict（原样返回）或 list（例如 manager_fetch 返回的 writer_reads）。"""
+    if isinstance(blocks, dict):
+        return blocks
+    return {b["block_id"]: b for b in blocks or [] if isinstance(b, dict) and "block_id" in b}
+
+
 def exposure_of(block: dict) -> str:
     """block 的内外部。没写这个字段的（旧数据、种子）按 external。"""
     return block.get("exposure") or "external"
@@ -253,11 +260,12 @@ def check_citations(
 
     cited：按重要性排好序的 block_id 列表。
     session_reads：本会话成功读过的 block_id 集合。
-    blocks：block_id → block，至少包含 cited 里的全部编号（找不到的视为不存在）。
+    blocks：block_id → block 的 dict，或 block 列表，至少包含 cited 里的全部编号（找不到的视为不存在）。
 
     检查顺序：格式 → 数量 → 重复 → 本会话读过 → 现在仍然有权读。任何一项不通过，整组拒绝。
     最后一项返回 can_read 的原因代码（例如 block 读过之后被隔离，返回 NOT_FOUND）。
     """
+    blocks = by_id(blocks)
     if (not isinstance(cited, list) or not cited
             or not all(isinstance(b, str) and b.strip() for b in cited)):
         return "INVALID_INPUT", []
@@ -350,7 +358,8 @@ def check_downgrade(
     default：默认标签 {"level", "scope", "exposure"}。
     suggestion：manager_suggest 的 downgrade 参数，None 表示没提降级。
     content：待审写入的正文。
-    writer_reads：block_id → block，写入时记下的来源（只有这些可以当证据）。
+    writer_reads：写入时记下的来源（只有这些可以当证据）。block_id → block 的 dict，
+                  或 manager_fetch 返回的 block 列表，都可以。
 
     结果是 "none"（没提降级）、"passed" 或 "void"（作废）。检查顺序：
     1. 格式；2. 建议标签不高于默认标签；3. 正文每一句都有证据；
@@ -360,6 +369,7 @@ def check_downgrade(
     标签由代码算出，不采信模型的说法；只有 passed 才返回算出的标签。
     """
     t = DOWNGRADE_TEXT[lang]
+    writer_reads = by_id(writer_reads)
     if suggestion is None:
         return "none", "", None
 
