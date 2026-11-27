@@ -1,0 +1,6 @@
+# MindVault 本地模型：qwen3:8b，固定 8K 上下文、温度 0。
+# 由 scripts/local_model_up.sh 自动创建：ollama create mv-qwen3 -f config/Modelfile.mv-qwen3
+# 16 GB 内存的 Mac 上，8K 上下文时模型约占 6 GB。不要调大 num_ctx，否则和服务、浏览器一起跑会换页。
+FROM qwen3:8b
+PARAMETER num_ctx 8192
+PARAMETER temperature 0
