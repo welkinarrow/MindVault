@@ -221,6 +221,28 @@ def can_manage(agent: dict) -> Optional[str]:
     return None
 
 
+BUSINESS_TOOLS = frozenset({
+    "memory_read", "memory_write", "memory_correct", "memory_rate", "memory_cite", "memory_trace",
+})
+MANAGER_TOOLS = frozenset({"manager_fetch", "manager_suggest"})
+
+
+def can_use_tool(agent: dict, tool: str) -> Optional[str]:
+    """按角色限制能调用的 MCP 工具（interfaces.md 13.1）。返回 None 表示允许。
+
+    - 管理工具：交给 can_manage（NOT_LOCAL_MODEL 或 NOT_MANAGER）。
+    - 业务工具：只有 business 角色能用；manager、admin 和写错的角色一律 ROLE_NOT_ALLOWED。
+      manager 密钥能看到所有待审写入，不让它再用业务工具，避免它的读取和写入混进业务数据。
+      admin 只在本机用 review_cli，不应该出现在 MCP 调用里。
+    工具名不在两张表里是代码错误，直接抛 ValueError，不静默放行。
+    """
+    if tool in MANAGER_TOOLS:
+        return can_manage(agent)
+    if tool in BUSINESS_TOOLS:
+        return None if role_of(agent) == "business" else "ROLE_NOT_ALLOWED"
+    raise ValueError(f"未知的工具名：{tool!r}")
+
+
 # ---------------------------------------------------------------- v2：引用（interfaces.md 13.6）
 
 

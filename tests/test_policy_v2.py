@@ -11,6 +11,7 @@ from server.policy import (
     can_correct,
     can_manage,
     can_read,
+    can_use_tool,
     check_citations,
     check_downgrade,
     default_label,
@@ -131,6 +132,50 @@ class TestCanManage(unittest.TestCase):
     def test_local_business_refused(self):
         self.assertEqual(can_manage(agent(location="local")), "NOT_MANAGER")
         self.assertEqual(can_manage(agent(location="local", role="business")), "NOT_MANAGER")
+
+
+class TestCanUseTool(unittest.TestCase):
+    BUSINESS = ("memory_read", "memory_write", "memory_correct", "memory_rate", "memory_cite", "memory_trace")
+    MANAGER = ("manager_fetch", "manager_suggest")
+
+    def test_business_agent(self):
+        """业务 agent（含没写角色的旧密钥）能用全部业务工具，不能用管理工具。"""
+        for a in (agent(), agent(location="local"), agent(location="local", role="business")):
+            for tool in self.BUSINESS:
+                with self.subTest(agent=a, tool=tool):
+                    self.assertIsNone(can_use_tool(a, tool))
+            for tool in self.MANAGER:
+                with self.subTest(agent=a, tool=tool):
+                    self.assertIn(can_use_tool(a, tool), ("NOT_LOCAL_MODEL", "NOT_MANAGER"))
+
+    def test_manager_only_manager_tools(self):
+        manager = agent(location="local", role="manager")
+        for tool in self.MANAGER:
+            self.assertIsNone(can_use_tool(manager, tool))
+        for tool in self.BUSINESS:
+            with self.subTest(tool=tool):
+                self.assertEqual(can_use_tool(manager, tool), "ROLE_NOT_ALLOWED")
+
+    def test_cloud_manager_gets_nothing(self):
+        manager = agent(location="cloud", role="manager")
+        for tool in self.MANAGER:
+            self.assertEqual(can_use_tool(manager, tool), "NOT_LOCAL_MODEL")
+        for tool in self.BUSINESS:
+            self.assertEqual(can_use_tool(manager, tool), "ROLE_NOT_ALLOWED")
+
+    def test_admin_and_unknown_role_get_nothing(self):
+        for role in ("admin", "Business", "superuser"):
+            a = agent(location="local", role=role)
+            for tool in self.BUSINESS:
+                with self.subTest(role=role, tool=tool):
+                    self.assertEqual(can_use_tool(a, tool), "ROLE_NOT_ALLOWED")
+            for tool in self.MANAGER:
+                with self.subTest(role=role, tool=tool):
+                    self.assertEqual(can_use_tool(a, tool), "NOT_MANAGER")
+
+    def test_unknown_tool_raises(self):
+        with self.assertRaises(ValueError):
+            can_use_tool(agent(), "memory_delete")
 
 
 class TestCheckCitations(unittest.TestCase):
