@@ -5,6 +5,7 @@
 
 用法（服务已在运行，本地模型已用 scripts/local_model_up.sh 预热；激活 .venv）：
     python scripts/local_agent.py --agent zhou-local "客户 B 为什么是 85 折？续约时能恢复原价吗？"
+    python scripts/local_agent.py --agent zhou-local --trace "…"   # 答完自动生成追溯视图并在浏览器打开
 
 每一步打印一行；完整过程写入 runs/<时间>-<agent>.jsonl（runs/ 不提交，里面可能有内部内容）。
 密钥从 config/agents.json 读取，不打印、不写入转录。
@@ -16,6 +17,7 @@ import json
 import re
 import sys
 import time
+import webbrowser
 from datetime import datetime
 from pathlib import Path
 
@@ -105,9 +107,11 @@ def summarize(name: str, result: dict) -> tuple[str, bool]:
 
 
 async def run(agent_id: str, key: str, url: str, question: str, max_steps: int, timeout: float,
-              lang: str, log) -> str:
+              lang: str, log) -> tuple[str, str | None]:
+    """返回 (最终回答, 引用编号)。没有成功提交引用时编号为 None。"""
     messages = [{"role": "system", "content": SYSTEM[lang]}, {"role": "user", "content": question}]
     cited = reminded = False
+    answer_id = None
     deadline = time.monotonic() + timeout
     async with Agent(url, key) as mcp:
         for step in range(1, max_steps + 1):
@@ -127,11 +131,12 @@ async def run(agent_id: str, key: str, url: str, question: str, max_steps: int, 
                     messages.append({"role": "user", "content": REMINDER[lang]})
                     continue
                 log({"step": step, "event": "answer", "content": reply.content, "seconds": round(reply.seconds, 2)})
-                return reply.content
+                return reply.content, answer_id
             for name, args in reply.tool_calls:
                 start = time.monotonic()
                 result = await run_tool(mcp, name, args)
-                cited = cited or (name == "memory_cite" and bool(result.get("answer_id")))
+                if name == "memory_cite" and result.get("answer_id"):
+                    cited, answer_id = True, result["answer_id"]
                 line, refused = summarize(name, result)
                 color = RED if refused else GREEN
                 print(f"[{step}] {name} {json.dumps(args, ensure_ascii=False)[:80]} → {color}{line}{RESET}"
@@ -149,6 +154,7 @@ def main() -> None:
     parser.add_argument("--agent", required=True, help="config/agents.json 里的 agent_id")
     parser.add_argument("--max-steps", type=int, default=8)
     parser.add_argument("--timeout", type=float, default=120, help="整次任务的总时限（秒）")
+    parser.add_argument("--trace", action="store_true", help="答完用 memory_trace 生成追溯视图并在浏览器打开")
     args = parser.parse_args()
 
     try:
@@ -173,12 +179,35 @@ def main() -> None:
         log({"event": "start", "agent": args.agent, "question": args.question})
         print(f"{args.agent} 提问：{args.question}\n")
         try:
-            answer = asyncio.run(run(args.agent, agents[args.agent]["key"], f"http://{cfg.host}:{cfg.port}/mcp",
+            answer, answer_id = asyncio.run(run(args.agent, agents[args.agent]["key"], f"http://{cfg.host}:{cfg.port}/mcp",
                                      args.question, args.max_steps, args.timeout, cfg.lang, log))
         except Exception as e:
             log({"event": "failed", "error": f"{type(e).__name__}: {e}"})
             sys.exit(f"{RED}失败：{e}{RESET}\n转录：{path.relative_to(ROOT)}")
-    print(f"\n回答：\n{answer}\n\n{DIM}转录：{path.relative_to(ROOT)}{RESET}")
+    print(f"\n回答：\n{answer}\n")
+    if answer_id:
+        print(f"引用编号：{answer_id}（python scripts/trace_view.py --agent {args.agent} --answer {answer_id}）")
+    print(f"{DIM}转录：{path.relative_to(ROOT)}{RESET}")
+    if args.trace:
+        open_trace(answer_id, args.agent, cfg.lang)
+
+
+def open_trace(answer_id: str | None, agent_id: str, lang: str) -> None:
+    """用调用者自己的权限取 memory_trace，生成追溯视图并打开。失败只提示，不影响已经给出的回答。"""
+    if not answer_id:
+        print(f"{RED}这次没有提交引用，生成不了追溯视图{RESET}")
+        return
+    import trace_view
+    try:
+        page = trace_view.render(trace_view.load_trace(answer_id, agent_id), None, lang, agent_id)
+    except BaseException as e:  # load_trace 失败时会 sys.exit
+        print(f"{RED}生成追溯视图失败：{e}{RESET}")
+        return
+    out = ROOT / "runs" / f"trace-{answer_id}-{agent_id}.html"
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(page, encoding="utf-8")
+    print(f"追溯视图：{out.relative_to(ROOT)}")
+    webbrowser.open(out.as_uri())
 
 
 if __name__ == "__main__":

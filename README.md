@@ -118,6 +118,27 @@ Restart the service after a change. Older databases are upgraded automatically o
 
 Agents authenticate with `Authorization: Bearer <key>`, using a 32-character hex key from `config/agents.json`. Never commit keys. Copy `agents.example.json` to `agents.json` and fill in the keys locally.
 
+## v2 for Demo Day (branch `v2`)
+
+v2 adds internal/external memory, a local memory manager, citations and source tracing. The interface
+is section 13 of [`docs/interfaces.md`](docs/interfaces.md) ([English](docs/interfaces_en.md)); the demo
+steps are in [`docs/v2/demo-runbook.md`](docs/v2/demo-runbook.md).
+
+| What | Command | Notes |
+| --- | --- | --- |
+| Local model (Ollama + qwen3:8b) | `scripts/local_model_up.sh` | Starts Ollama, creates `mv-qwen3` (8K context, temperature 0), warms it up and keeps it loaded for 24 h |
+| Calling the local model from Python | `scripts/local_llm.py` | `chat()` and `chat_json()`; native `/api/chat` with thinking off. Usage at the top of the file |
+| Lightweight local agent | `python scripts/local_agent.py --agent zhou-local --trace "<question>"` | Four tools (search, read, write, cite); `--trace` opens the trace view after answering |
+| Scripted fallback client | `python scripts/scripted_client.py scenario1` (or `scenario2 [--write]`) | No model: fixed tool calls against the real service |
+| Trace view | `python scripts/trace_view.py --agent zhou-local --answer c-0007 --block b-610` | Static HTML from `memory_trace`; mocks in `tests/fixtures/trace/` |
+| End-to-end tests T6–T10 | `python scripts/run_tests.py` | Needs v2 service, scenario 1 seeds and the demo agents; T1–T5 remain `scripts/verify.py` |
+| Memory manager evaluation | `python eval/run_eval.py --judge <module:function> --cases <dir>` | Pass bar in `eval/criteria.md`, committed before running |
+| Unit tests | `python -m unittest discover -s tests` | No model or service needed |
+
+The demo agents (`wang-cloud`, `wang-local`, `zhou-local`, `manager-local`, `manager-cloud`) are in
+`config/agents.example.json` with `model_location` and `role`. To add them to an existing
+`config/agents.json` without changing other keys, use `scripts/agents.py add … --model-location … --role …`.
+
 ## Contributing
 
 [docs/interfaces_en.md](docs/interfaces_en.md) is the single source of truth for every handoff between components. If the code and the contract disagree, the contract wins. To change the contract, raise it in the group chat. Once all three members agree, A updates the file, bumps the version, and adds an entry to its change log.

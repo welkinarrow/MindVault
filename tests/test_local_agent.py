@@ -57,8 +57,9 @@ def run(replies, mcp, max_steps=8):
     events = []
     with mock.patch.object(local_agent, "chat", side_effect=replies), \
             mock.patch.object(local_agent, "Agent", mcp), redirect_stdout(io.StringIO()) as out:
-        answer = asyncio.run(local_agent.run("zhou-local", "secret-key", "http://x/mcp", "客户 B 为什么是 85 折？",
-                                             max_steps, 60, "zh", events.append))
+        answer, answer_id = asyncio.run(local_agent.run("zhou-local", "secret-key", "http://x/mcp",
+                                                        "客户 B 为什么是 85 折？", max_steps, 60, "zh", events.append))
+    events.append({"event": "_answer_id", "answer_id": answer_id})
     return answer, events, out.getvalue()
 
 
@@ -79,6 +80,7 @@ class TestLoop(unittest.TestCase):
         ])
         self.assertNotIn("reminder", [e["event"] for e in events])
         self.assertNotIn("secret-key", out + repr(events))
+        self.assertEqual(events[-1]["answer_id"], "c-0001")
 
     def test_reminds_once_when_citation_forgotten(self):
         mcp = FakeMCP({"memory_read": B602})
@@ -120,6 +122,7 @@ class TestLoop(unittest.TestCase):
         replies = [tool_reply("memory_read", {}), tool_reply("memory_delete", {"block_id": "b-1"}), text_reply("x")]
         _, events, _ = run(replies, mcp)
         codes = [e["result"]["error"]["code"] for e in events if e["event"] == "tool"]
+        self.assertIsNone(events[-1]["answer_id"])
         self.assertEqual(codes, ["INVALID_INPUT", "UNKNOWN_TOOL"])
         self.assertEqual(mcp.calls, [])
 
@@ -140,6 +143,35 @@ class TestLoop(unittest.TestCase):
         replies = [tool_reply("memory_read", {"block_id": "b-602"})] * 3
         with self.assertRaises(RuntimeError):
             run(replies, mcp, max_steps=3)
+
+
+class TestOpenTrace(unittest.TestCase):
+    def test_no_answer_id(self):
+        with redirect_stdout(io.StringIO()) as out:
+            local_agent.open_trace(None, "zhou-local", "zh")
+        self.assertIn("没有提交引用", out.getvalue())
+
+    def test_writes_and_opens(self):
+        import json
+        import trace_view
+        fixture = json.loads((local_agent.ROOT / "tests" / "fixtures" / "trace" / "scenario2_answer.json")
+                             .read_text(encoding="utf-8"))
+        with mock.patch.object(trace_view, "load_trace", return_value=fixture), \
+                mock.patch.object(local_agent.webbrowser, "open") as opened, redirect_stdout(io.StringIO()):
+            local_agent.open_trace("c-0007", "zhou-local-test", "zh")
+        out = local_agent.ROOT / "runs" / "trace-c-0007-zhou-local-test.html"
+        try:
+            self.assertIn("b-602", out.read_text(encoding="utf-8"))
+            opened.assert_called_once_with(out.as_uri())
+        finally:
+            out.unlink(missing_ok=True)
+
+    def test_fetch_failure_is_reported(self):
+        import trace_view
+        with mock.patch.object(trace_view, "load_trace", side_effect=SystemExit("memory_trace 被拒")), \
+                redirect_stdout(io.StringIO()) as out:
+            local_agent.open_trace("c-0007", "wang-cloud", "zh")
+        self.assertIn("生成追溯视图失败", out.getvalue())
 
 
 class TestSummarize(unittest.TestCase):
