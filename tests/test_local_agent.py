@@ -82,10 +82,19 @@ class TestLoop(unittest.TestCase):
 
     def test_reminds_once_when_citation_forgotten(self):
         mcp = FakeMCP({"memory_read": B602})
-        replies = [tool_reply("memory_read", {"block_id": "b-602"}), text_reply("先回答"), text_reply("还是没引用")]
+        replies = [tool_reply("memory_read", {"block_id": "b-602"}), text_reply("补偿折扣 [b-602]"),
+                   text_reply("还是没引用 [b-602]")]
         answer, events, _ = run(replies, mcp)
-        self.assertEqual(answer, "还是没引用")
+        self.assertEqual(answer, "还是没引用 [b-602]")
         self.assertEqual([e["event"] for e in events].count("reminder"), 1)
+
+    def test_no_reminder_when_no_memory_used(self):
+        """没有出处标记（例如记忆里找不到答案），直接结束，不逼模型引用无关的记忆。"""
+        mcp = FakeMCP({"memory_read": B602})
+        replies = [tool_reply("memory_search", {"query": "退款率"}), text_reply("记忆里没有相关信息")]
+        answer, events, _ = run(replies, mcp)
+        self.assertEqual(answer, "记忆里没有相关信息")
+        self.assertNotIn("reminder", [e["event"] for e in events])
 
     def test_refusal_is_passed_back_to_model(self):
         denied = {"denied": True, "reason_code": "EXPOSURE_INTERNAL", "block_id": "b-802", "message": "内部"}
@@ -108,8 +117,7 @@ class TestLoop(unittest.TestCase):
 
     def test_missing_argument_and_unknown_tool_go_back_to_model(self):
         mcp = FakeMCP({})
-        replies = [tool_reply("memory_read", {}), tool_reply("memory_delete", {"block_id": "b-1"}), text_reply("x"),
-                   text_reply("y")]
+        replies = [tool_reply("memory_read", {}), tool_reply("memory_delete", {"block_id": "b-1"}), text_reply("x")]
         _, events, _ = run(replies, mcp)
         codes = [e["result"]["error"]["code"] for e in events if e["event"] == "tool"]
         self.assertEqual(codes, ["INVALID_INPUT", "UNKNOWN_TOOL"])
@@ -117,7 +125,7 @@ class TestLoop(unittest.TestCase):
 
     def test_server_error_becomes_tool_result(self):
         mcp = FakeMCP({"memory_cite": RuntimeError("Unknown tool: memory_cite")})
-        replies = [tool_reply("memory_cite", {"block_ids": ["b-1"]}), text_reply("x"), text_reply("y")]
+        replies = [tool_reply("memory_cite", {"block_ids": ["b-1"]}), text_reply("x")]
         _, events, _ = run(replies, mcp)
         self.assertEqual(events[0]["result"]["error"]["code"], "RuntimeError")
 
