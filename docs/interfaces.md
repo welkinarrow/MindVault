@@ -5,7 +5,7 @@
 | 版本 | v1.0（草稿，待三人确认） |
 | 维护人 | A（Memory MCP 服务与权限） |
 | 适用范围 | HW6 MVP + HW7 benchmark 开关 |
-| 最后更新 | 2026-11-26 |
+| 最后更新 | 2026-11-27 |
 
 本文件是三人之间所有交接点的唯一约定。代码与本文件不一致时，以本文件为准，并先修改本文件。
 
@@ -536,7 +536,8 @@ SELECT block_id, accuracy FROM ratings WHERE session_id = ?;
 | v0.7 | 2026-11-02 | A | HW7：LABEL_MODE 开关（I-7）及 agent 自己定级的基线；结构化事件日志 logs/events.jsonl（I-6）；审核用量日志；RUN_ID |
 | v0.8 | 2026-11-03 | A（代为修改） | HW7：实习助手 `read_scopes` 改为 `["public", "finance"]`，级别仍为 L0，benchmark 的泄露判定只取决于写入级别（见 6.1） |
 | v0.9 | 2026-11-03 | A（代为修改） | HW7 改动：`SEARCH_MODE=titles`，关键词检索只列标题、不计入污点；正文和污点只来自按 block_id 读取（见 4.2）。默认行为不变 |
-|v1.0 | 2026-11-26 | A | v2：内外部、预检查、内部写入走人工审批、引用与追溯、记忆管理接口（第 13 节）。
+| v1.0 | 2026-11-26 | A | v2：内外部、预检查、内部写入走人工审批、引用与追溯、记忆管理接口（第 13 节） |
+| v1.0 草稿 r2 | 2026-11-27 | A | 第 13 节补充：ROLE_NOT_ALLOWED；trace 返回带 content；片段比对去掉全部空白；review_cli 的 decide 命令；policy.py 函数与接入位置（13.14）；测试用的密钥和种子原文 |
 
 ---
 
@@ -571,8 +572,8 @@ v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码�
 | 值 | 含义 | 能用的工具 |
 | --- | --- | --- |
 | business | 业务 agent（默认） | memory_read、memory_write、memory_correct、memory_rate、memory_cite、memory_trace |
-| manager | 记忆管理 agent | 只有 manager_fetch、manager_suggest（13.7），且 model_location 必须是 local |
-| admin | 超级管理员 | 不走 MCP，只在本机用 review_cli 操作（13.8） |
+| manager | 记忆管理 agent | 只有 manager_fetch、manager_suggest（13.7），且 model_location 必须是 local；调用业务工具返回 ROLE_NOT_ALLOWED |
+| admin | 超级管理员 | 不走 MCP，只在本机用 review_cli 操作（13.8）；调用任何 MCP 工具都被拒 |
 
 **状态（status）** 新增一个值：
 
@@ -595,6 +596,7 @@ v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码�
 | NOT_PENDING | manager_suggest | 该写入不在待审状态（已处理或不存在） |
 | PRECHECK_FAILED | memory_write | 没通过预检查（13.4），返回里写明是哪条规则 |
 | NEEDS_HUMAN_REVIEW | memory_correct | 修改涉及内部内容，不发给云端审核，本版不执行（13.5） |
+| ROLE_NOT_ALLOWED | 全部业务工具 | 调用者的角色不是 business（manager、admin，或角色写错），见 13.1 |
 
 原先计划的 NOT_READ_IN_TASK 不再新增：“本次任务”就用会话来代表，和评分用同一个判断、同一个代码。
 
@@ -691,7 +693,7 @@ v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码�
 | block_ids | string 数组 | 是 | 1–10 个，不重复，按重要性排序 |
 | answer | string | 否 | 回答正文，1–4000 字符 |
 
-服务调用 `policy.check_citations`：数量、是否重复、是否都在本会话读过的集合里，并且调用者现在仍然有权读。全部通过才保存（表 `citations`、`citation_items`），保留顺序。
+服务调用 `policy.check_citations`：数量、是否重复、是否都在本会话读过的集合里，并且调用者现在仍然有权读。全部通过才保存（表 `citations`、`citation_items`），保留顺序。读过但现在已无权读的（例如之后被隔离），返回 can_read 的原因码（如 NOT_FOUND）和对应编号。
 
 ```json
 {"answer_id": "c-0007", "citations": ["b-602", "b-603", "b-601"]}
@@ -737,7 +739,8 @@ v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码�
       "stale": false,
       "approved_by": null,
       "approved_at": null,
-      "sources": []
+      "sources": [],
+      "content": "客户 B 遇到严重故障，作为补偿改为 85 折，到 2026 年底到期。"
     }
   },
   "hidden_sources": 0
@@ -747,6 +750,7 @@ v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码�
 - 按 block_id 查时，`answer_id`、`answer`、`citations` 为 null，`root` 字段给出所查的 block_id。
 - `approved_by` 和 `approved_at` 来自审批记录（13.8）。种子数据和经云端审核入库的写入为 null。
 - `citations` 里只放编号和排序，内容统一放在 `blocks` 里，便于网页按编号连线。
+- 每个 block 带 `content`（11/27 补）：追溯视图的卡片要显示原文。`blocks` 里只有调用者有权读的记忆，所以不会多泄露内容。完整的 mock 见 `tests/fixtures/trace/`，A5 和 T9 都以它为准。
 
 **提醒（影响 A5 和 T9 的写法）：** cloud 调用者读不到 b-610（internal），所以它查 b-610 的追溯得到的是 EXPOSURE_INTERNAL 拒绝，而不是一份“来源已隐藏”的链条。“已隐藏 N 条”只会出现在调用者能读这条 block、但读不了它的部分来源时；在两个场景里，只有经管理员批准降级为 external 的那两条降级样本属于这种情况。所以两个视角对比要用降级样本来演示，T9 里“云端密钥看到已隐藏”的断言也要改用降级样本。
 
@@ -795,7 +799,7 @@ v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码�
 }
 ```
 
-服务调用 `policy.check_downgrade`，按顺序检查：建议标签不高于默认标签；写入的每一句都有证据；每个 snippet 去掉多余空白后是所引 block 原文的一部分；所引 block 都在 `writer_reads` 里；用所引 block 算出的标签（级别取最高，有一条 internal 就是 internal）等于建议标签。任何一条不通过，这条降级建议作废，但 keep 和 relation 的答案照常保存。
+服务调用 `policy.check_downgrade`，按顺序检查：格式；建议标签不高于默认标签（范围必须相同）；写入按句末标点和换行切句后，每一句都有证据（句子要和原文一致，改写的不算）；所引 block 都在 `writer_reads` 里；每个 snippet 去掉全部空白后至少 4 个字符，并且是所引 block 标题或正文（同样去掉空白）的一部分；用所引 block 算出的标签（级别取最高，有一条 internal 就是 internal，范围同默认标签）等于建议标签。任何一条不通过，这条降级建议作废，但 keep 和 relation 的答案照常保存。
 
 ```json
 {"suggestion_id": "s-0003", "downgrade_check": "void", "check_reason": "第 2 句的片段不在 b-801 原文里", "computed_label": null}
@@ -805,7 +809,8 @@ v2 从 `product-lineage`（e1524d4）切出。下面这些改动已经在代码�
 
 ### 13.8 管理员审批（review_cli，不走 MCP）
 
-- 管理员在本机运行 `scripts/review_cli.py`，它在进程内调用服务的 `decide()`，不开放任何网络接口。
+- 管理员在运行服务的那台电脑上执行 `scripts/review_cli.py`。它直接调用服务的代码（`Store` 和 `decide()`），读写同一个数据库，不经过 MCP 和网络，写法同 `scripts/reset_taint.py`。agent 手里没有任何审批工具。
+- 除了交互式列表，还要支持一步完成的命令，供 `scripts/run_tests.py` 使用：`python scripts/review_cli.py decide <block_id> approve|approve_downgrade|reject [--suggestion <suggestion_id>]`，成功时退出码为 0。
 - 列表显示每条 pending：内容、默认标签、建议标签（降级单独标出）、核对结果、keep 和 relation 的答案。
 - 三种决定：`approve`（按默认标签放行，状态改为 verified）、`approve_downgrade`（按 `computed_label` 放行，只有 `downgrade_check` 为 passed 时可选）、`reject`（状态改为 quarantined）。
 - 每次决定写入表 `approvals`：`block_id`、`decision`、`label_before`、`label_after`、`suggestion_id`、`decided_by`、`decided_at`。memory_trace 的 `approved_by` 和 `approved_at` 从这里取。
@@ -869,6 +874,13 @@ CREATE TABLE approvals (
 
 **种子文件**每条 block 可以带 `author`、`created_at`、`exposure`，没写的分别按 `seed`、reset 的时间、`external`。两个场景各用一个种子文件，通过 `SEED_FILE` 选择。
 
+**测试依赖的种子原文**（T10 要核对降级片段确实出现在原文里，A5 的 mock 用的也是这两段；要改措辞请同时改 `scripts/run_tests.py` 和 `tests/fixtures/trace/`）：
+
+- b-801 新员工入职指南（L0 · public · external）：`新员工第一周完成账号开通和安全培训。周五参加部门介绍会。`
+- b-802 生产环境部署手册（L1 · rnd · internal）：正文里包含“通知值班工程师”，例如 `部署前在跳板机上执行 release.sh，并通知值班工程师。`
+
+**测试用的密钥**（`scripts/run_tests.py` 按 agent_id 取）：`wang-cloud`（L1 · rnd · cloud）、`wang-local`（L1 · rnd · local）、`zhou-local`（L1 · sales · local）、`manager-local`（local · manager）、`manager-cloud`（cloud · manager，只用来测 NOT_LOCAL_MODEL）。
+
 ### 13.10 日志
 
 - READ 行可以出现 `FILTERED EXPOSURE_INTERNAL` 和 `DENY EXPOSURE_INTERNAL`。
@@ -900,3 +912,18 @@ CREATE TABLE approvals (
 | Q-7 | 内部修改是否走人工审批 | C | 不调用审核函数，返回 NEEDS_HUMAN_REVIEW，人工审批修改放到 Demo Day 之后 |
 | Q-8 | 预检查的注入和凭据模式表由谁维护 | B | B 维护 `server/precheck.py` 里的模式表，C 负责接入 |
 | Q-9 | “已隐藏 N 条”用降级样本演示，T9 和 A5 的写法随之调整 | A、B | 按 13.6 的提醒执行 |
+
+### 13.14 policy.py v2 的函数和接入位置（A 已交付，11/26）
+
+权限判断全部在 `server/policy.py`，服务只负责在下面这些位置调用，不另写判断。
+
+| 函数 | 返回 | 服务在哪里调用 |
+| --- | --- | --- |
+| `can_use_tool(agent, tool)` | None 或 ROLE_NOT_ALLOWED / NOT_LOCAL_MODEL / NOT_MANAGER | 每个 MCP 工具的开头，不是 None 就直接拒绝 |
+| `can_read(agent, block)` | None 或原因码（已含 pending 和内外部） | 读取、检索、来源过滤、trace，调用方式不变 |
+| `can_correct(agent, block)` | 同上 | memory_correct，调用方式不变 |
+| `default_label(agent, taint_level, internal_read)` | `{level, scope, exposure}` | memory_write 定默认标签；`internal_read` 来自 agent_taint 新加的列 |
+| `can_manage(agent)` | None 或 NOT_LOCAL_MODEL / NOT_MANAGER | manager_fetch、manager_suggest（can_use_tool 已经包含，可不重复调用） |
+| `check_citations(agent, block_ids, session_reads, blocks)` | `(None, [])` 或 `(原因码, 出问题的编号)` | memory_cite；`session_reads` 是会话的 read_block_ids |
+| `check_downgrade(default, downgrade, content, writer_reads)` | `(none/passed/void, 理由, computed_label)` | manager_suggest；只有 passed 时保存 computed_label |
+| `label_at_most(label, ceiling)` | bool | 需要比较两个标签时 |

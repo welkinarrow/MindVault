@@ -5,7 +5,7 @@
 | Version | v1.0 (draft, pending confirmation by all three members) |
 | Maintainer | A (Memory MCP service and permissions) |
 | Scope | HW6 MVP + HW7 benchmark switches |
-| Last updated | 2026-11-26 |
+| Last updated | 2026-11-27 |
 
 This file is the single source of truth for every handoff point between the three of us. If the code and this file disagree, this file wins: update this file first.
 
@@ -539,6 +539,7 @@ These rules are what verify.py and the demo check. Changing any of them requires
 | v0.8 | 2026-11-03 | A (applied on A's behalf) | HW7: intern `read_scopes` now `["public", "finance"]` at level 0, so the benchmark's leak check depends only on the write level (see 6.1) |
 | v0.9 | 2026-11-03 | A (applied on A's behalf) | HW7 change: `SEARCH_MODE=titles`: keyword search lists titles only and does not raise taint; content and taint come only from reads by block_id (see 4.2). Default unchanged |
 | v1.0 | 2026-11-26 | A | v2: internal/external, pre-check, internal writes go to human approval, citations and tracing, memory manager interfaces (section 13) |
+| v1.0 draft r2 | 2026-11-27 | A | Section 13 additions: ROLE_NOT_ALLOWED; trace results include content; snippets compared with all whitespace removed; review_cli decide command; policy.py functions and where to call them (13.14); test keys and seed text |
 
 ---
 
@@ -573,8 +574,8 @@ Old data and seed entries without this field are treated as external.
 | Value | Meaning | Tools it may use |
 | --- | --- | --- |
 | business | Business agent (default) | memory_read, memory_write, memory_correct, memory_rate, memory_cite, memory_trace |
-| manager | Memory manager | Only manager_fetch and manager_suggest (13.7), and model_location must be local |
-| admin | Super admin | Not via MCP; uses review_cli on the local machine only (13.8) |
+| manager | Memory manager | Only manager_fetch and manager_suggest (13.7), and model_location must be local; business tools return ROLE_NOT_ALLOWED |
+| admin | Super admin | Not via MCP; uses review_cli on the local machine only (13.8); every MCP tool is refused |
 
 **Status** gains one value:
 
@@ -597,6 +598,7 @@ On approval it becomes `verified`; on rejection it becomes `quarantined` and is 
 | NOT_PENDING | manager_suggest | The write is not pending (already handled or does not exist) |
 | PRECHECK_FAILED | memory_write | Failed the pre-check (13.4); the result names the rule |
 | NEEDS_HUMAN_REVIEW | memory_correct | The correction involves internal content, is not sent to the cloud reviewer, and is not applied in this version (13.5) |
+| ROLE_NOT_ALLOWED | all business tools | The caller's role is not business (manager, admin, or a misspelled role); see 13.1 |
 
 The previously planned NOT_READ_IN_TASK is dropped: the session stands in for "this task", so citations use the same check and code as ratings.
 
@@ -693,7 +695,7 @@ Until confirmed, we use (b).
 | block_ids | string array | yes | 1–10, no duplicates, ordered by importance |
 | answer | string | no | Answer text, 1–4000 characters |
 
-The service calls `policy.check_citations`: count, duplicates, whether each was read in this session, and whether the caller may still read it. Only if everything passes are they stored (tables `citations`, `citation_items`), with their order.
+The service calls `policy.check_citations`: count, duplicates, whether each was read in this session, and whether the caller may still read it. Only if everything passes are they stored (tables `citations`, `citation_items`), with their order. A block that was read but can no longer be read (for example, quarantined since) returns can_read's reason code (such as NOT_FOUND) with its ID.
 
 ```json
 {"answer_id": "c-0007", "citations": ["b-602", "b-603", "b-601"]}
@@ -739,7 +741,8 @@ On failure nothing is stored:
       "stale": false,
       "approved_by": null,
       "approved_at": null,
-      "sources": []
+      "sources": [],
+      "content": "Customer B had a serious outage; as compensation the discount became 15%, until the end of 2026."
     }
   },
   "hidden_sources": 0
@@ -749,6 +752,7 @@ On failure nothing is stored:
 - When traced by block_id, `answer_id`, `answer` and `citations` are null, and a `root` field gives the traced block_id.
 - `approved_by` and `approved_at` come from the approval record (13.8). They are null for seed data and for writes stored after cloud review.
 - `citations` holds only IDs and ranks; all content is in `blocks`, so the web page can draw links by ID.
+- Every block carries `content` (added 11/27): the trace view's cards show the text. `blocks` only holds memories the caller may read, so nothing extra leaks. Full mocks are in `tests/fixtures/trace/`; A5 and T9 both follow them.
 
 **Note (affects how A5 and T9 are written):** a cloud caller cannot read b-610 (internal), so tracing b-610 gives an EXPOSURE_INTERNAL refusal, not a chain with hidden sources. "N hidden" only appears when the caller can read a block but not some of its sources. In the two scenarios, only the two downgrade samples, once an admin approves their downgrade to external, fit that case. So the two-view comparison should be shown with a downgrade sample, and T9's "cloud key sees hidden sources" assertion should use one as well.
 
@@ -797,7 +801,7 @@ On failure nothing is stored:
 }
 ```
 
-The service calls `policy.check_downgrade`, which checks in order: the suggested label is not above the default; every sentence of the write has evidence; every snippet, after collapsing extra whitespace, is part of the cited block's text; every cited block is in `writer_reads`; and the label computed from the cited blocks (highest level; internal if any is internal) equals the suggested label. If any check fails the downgrade is voided, but the keep and relation answers are still stored.
+The service calls `policy.check_downgrade`, which checks in order: format; the suggested label is not above the default (same scope required); after splitting the write at sentence-ending punctuation and line breaks, every sentence has evidence (the sentence must match the write; paraphrases do not count); every cited block is in `writer_reads`; every snippet, with all whitespace removed, is at least 4 characters and part of the cited block's title or content (also with whitespace removed); and the label computed from the cited blocks (highest level; internal if any is internal; scope as in the default) equals the suggested label. If any check fails the downgrade is voided, but the keep and relation answers are still stored.
 
 ```json
 {"suggestion_id": "s-0003", "downgrade_check": "void", "check_reason": "The snippet for sentence 2 is not in b-801", "computed_label": null}
@@ -808,6 +812,7 @@ The service calls `policy.check_downgrade`, which checks in order: the suggested
 ### 13.8 Admin approval (review_cli, not via MCP)
 
 - The admin runs `scripts/review_cli.py` on the machine that runs the service. It calls the service code directly (`Store` and `decide()`) and reads and writes the same database, with no MCP and no network, the same way `scripts/reset_taint.py` works. Agents have no approval tool at all.
+- Besides the interactive list, it supports a one-step command for `scripts/run_tests.py`: `python scripts/review_cli.py decide <block_id> approve|approve_downgrade|reject [--suggestion <suggestion_id>]`, exiting with 0 on success.
 - The list shows each pending write: content, default label, suggested label (downgrades flagged separately), check result, and the keep and relation answers.
 - Three decisions: `approve` (store with the default label, status becomes verified), `approve_downgrade` (store with `computed_label`; available only when `downgrade_check` is passed), `reject` (status becomes quarantined).
 - Every decision is written to table `approvals`: `block_id`, `decision`, `label_before`, `label_after`, `suggestion_id`, `decided_by`, `decided_at`. memory_trace takes `approved_by` and `approved_at` from here.
@@ -871,6 +876,13 @@ CREATE TABLE approvals (
 
 **Seed files:** each block may carry `author`, `created_at` and `exposure`; when missing they default to `seed`, the reset time and `external`. Each scenario has its own seed file, chosen with `SEED_FILE`.
 
+**Seed text the tests depend on** (T10 checks that downgrade snippets really appear in the text, and A5's mocks use the same two passages; if you change the wording, also change `scripts/run_tests.py` and `tests/fixtures/trace/`):
+
+- b-801 new-hire guide (L0 · public · external): `新员工第一周完成账号开通和安全培训。周五参加部门介绍会。`
+- b-802 production deployment manual (L1 · rnd · internal): the text contains "通知值班工程师", for example `部署前在跳板机上执行 release.sh，并通知值班工程师。`
+
+**Test keys** (`scripts/run_tests.py` looks them up by agent_id): `wang-cloud` (L1 · rnd · cloud), `wang-local` (L1 · rnd · local), `zhou-local` (L1 · sales · local), `manager-local` (local · manager), `manager-cloud` (cloud · manager, only to test NOT_LOCAL_MODEL).
+
 ### 13.10 Logs
 
 - READ lines can show `FILTERED EXPOSURE_INTERNAL` and `DENY EXPOSURE_INTERNAL`.
@@ -902,3 +914,18 @@ CREATE TABLE approvals (
 | Q-7 | Do internal corrections go through human approval | C | Do not call the review function; return NEEDS_HUMAN_REVIEW; human approval of corrections comes after Demo Day |
 | Q-8 | Who maintains the injection and credential pattern lists for the pre-check | B | B maintains the lists in `server/precheck.py`; C wires them in |
 | Q-9 | Show "N hidden" with a downgrade sample, and adjust T9 and A5 accordingly | A, B | Follow the note in 13.6 |
+
+### 13.14 policy.py v2 functions and where to call them (delivered by A, 11/26)
+
+All permission checks live in `server/policy.py`; the service only calls them at these points and adds no checks of its own.
+
+| Function | Returns | Where the service calls it |
+| --- | --- | --- |
+| `can_use_tool(agent, tool)` | None, or ROLE_NOT_ALLOWED / NOT_LOCAL_MODEL / NOT_MANAGER | At the start of every MCP tool; refuse unless None |
+| `can_read(agent, block)` | None or a reason code (pending and exposure included) | Reads, searches, source filtering, trace; same call as before |
+| `can_correct(agent, block)` | Same | memory_correct; same call as before |
+| `default_label(agent, taint_level, internal_read)` | `{level, scope, exposure}` | memory_write default label; `internal_read` comes from the new agent_taint column |
+| `can_manage(agent)` | None, or NOT_LOCAL_MODEL / NOT_MANAGER | manager_fetch, manager_suggest (already covered by can_use_tool) |
+| `check_citations(agent, block_ids, session_reads, blocks)` | `(None, [])` or `(reason code, offending IDs)` | memory_cite; `session_reads` is the session's read_block_ids |
+| `check_downgrade(default, downgrade, content, writer_reads)` | `(none/passed/void, reason, computed_label)` | manager_suggest; store computed_label only when passed |
+| `label_at_most(label, ceiling)` | bool | Whenever two labels need comparing |
