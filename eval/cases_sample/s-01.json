@@ -1,0 +1,31 @@
+{
+  "id": "s-01",
+  "category": "normal",
+  "note": "普通写入：内容来自外部入职指南，值得保存，无重复",
+  "write": {
+    "title": "入职第一周提醒",
+    "content": "新员工第一周记得完成安全培训。",
+    "default_label": {
+      "level": 0,
+      "scope": "rnd",
+      "exposure": "external"
+    }
+  },
+  "writer_reads": [
+    {
+      "block_id": "b-801",
+      "title": "新员工入职指南",
+      "content": "新员工第一周完成账号开通和安全培训。周五参加部门介绍会。",
+      "level": 0,
+      "scope": "public",
+      "exposure": "external"
+    }
+  ],
+  "related": [],
+  "expected": {
+    "keep": true,
+    "relation": "none",
+    "related_ids": [],
+    "downgrade": null
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "s-02",
+  "category": "should_downgrade",
+  "note": "读过内部手册，但写出的内容只来自外部入职指南，可以降为 L0 外部",
+  "write": {
+    "title": "新同事第一周须知",
+    "content": "新员工第一周要开通账号并完成安全培训。周五有部门介绍会。",
+    "default_label": {
+      "level": 1,
+      "scope": "rnd",
+      "exposure": "internal"
+    }
+  },
+  "writer_reads": [
+    {
+      "block_id": "b-801",
+      "title": "新员工入职指南",
+      "content": "新员工第一周完成账号开通和安全培训。周五参加部门介绍会。",
+      "level": 0,
+      "scope": "public",
+      "exposure": "external"
+    },
+    {
+      "block_id": "b-802",
+      "title": "生产环境部署手册",
+      "content": "部署前在跳板机上执行 release.sh，并通知值班工程师。",
+      "level": 1,
+      "scope": "rnd",
+      "exposure": "internal"
+    }
+  ],
+  "related": [],
+  "expected": {
+    "keep": true,
+    "relation": "none",
+    "related_ids": [],
+    "downgrade": {
+      "level": 0,
+      "scope": "rnd",
+      "exposure": "external"
+    }
+  }
+}
