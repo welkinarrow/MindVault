@@ -536,7 +536,7 @@ SELECT block_id, accuracy FROM ratings WHERE session_id = ?;
 | v0.7 | 2026-11-02 | A | HW7：LABEL_MODE 开关（I-7）及 agent 自己定级的基线；结构化事件日志 logs/events.jsonl（I-6）；审核用量日志；RUN_ID |
 | v0.8 | 2026-11-03 | A（代为修改） | HW7：实习助手 `read_scopes` 改为 `["public", "finance"]`，级别仍为 L0，benchmark 的泄露判定只取决于写入级别（见 6.1） |
 | v0.9 | 2026-11-03 | A（代为修改） | HW7 改动：`SEARCH_MODE=titles`，关键词检索只列标题、不计入污点；正文和污点只来自按 block_id 读取（见 4.2）。默认行为不变 |
-｜v1.0 | 2026-11-26 | A | v2：内外部、预检查、内部写入走人工审批、引用与追溯、记忆管理接口（第 13 节）。
+|v1.0 | 2026-11-26 | A | v2：内外部、预检查、内部写入走人工审批、引用与追溯、记忆管理接口（第 13 节）。
 
 ---
 
